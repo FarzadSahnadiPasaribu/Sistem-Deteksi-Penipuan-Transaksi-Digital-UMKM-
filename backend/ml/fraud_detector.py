@@ -125,7 +125,11 @@ class UMKMFraudDetector:
 
     def _compute_feature_stats(self, X: pd.DataFrame):
         self.feature_stats = {
-            col: {"mean": X[col].mean(), "std": X[col].std(), "max": X[col].max()}
+            col: {
+                "mean": float(X[col].mean()),
+                "std": float(X[col].std()),
+                "max": float(X[col].max()),
+            }
             for col in FEATURE_COLUMNS
         }
 
