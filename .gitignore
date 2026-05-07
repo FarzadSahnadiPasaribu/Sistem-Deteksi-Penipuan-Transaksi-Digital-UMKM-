@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env
+*.env.local
+
+# Database
+data/umkm_fraud.db
+data/*.db
+
+# ML Models (besar - bisa di-generate ulang)
+backend/ml/saved_models/
+
+# Data CSV (bisa di-generate ulang via data_generator.py)
+data/umkm_transactions.csv
+data/evaluation_report.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Jupyter
+.ipynb_checkpoints/

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Deteksi Penipuan UMKM | Kelompok 6</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      <h1>FraudShield<br>UMKM</h1>
+    </div>
+    <div class="subtitle">Sistem Deteksi Penipuan Digital</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Menu Utama</div>
+    <a class="nav-item active" data-view="dashboard">
+      <span class="nav-icon">📊</span> Dashboard
+    </a>
+    <a class="nav-item" data-view="analyze">
+      <span class="nav-icon">🔍</span> Analisis Transaksi
+    </a>
+    <a class="nav-item" data-view="history">
+      <span class="nav-icon">📋</span> Riwayat Transaksi
+    </a>
+
+    <div class="nav-section-label" style="margin-top:8px">Sistem</div>
+    <a class="nav-item" data-view="model">
+      <span class="nav-icon">🤖</span> Model AI
+    </a>
+    <a class="nav-item" href="/docs" target="_blank">
+      <span class="nav-icon">📄</span> API Docs
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    Kelompok 6 &mdash; 2024<br>
+    Farrel &bull; Farzad &bull; Hafif &bull; Arung
+  </div>
+</aside>
+
+<!-- ===================== MAIN ===================== -->
+<div class="main-content">
+  <header class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-subtitle" id="topbar-subtitle">Ringkasan deteksi penipuan transaksi UMKM</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-outline btn-sm" onclick="loadDashboard()">🔄 Refresh</button>
+      <button class="btn btn-primary btn-sm" onclick="showView('analyze')">+ Analisis Baru</button>
+    </div>
+  </header>
+
+  <main class="page-content">
+
+    <!-- ============ DASHBOARD VIEW ============ -->
+    <div class="view active" id="view-dashboard">
+
+      <!-- Stat Cards Row 1 -->
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon blue">📦</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-total">-</div>
+            <div class="stat-label">Total Transaksi</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">🚨</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-fraud">-</div>
+            <div class="stat-label">Terdeteksi Fraud</div>
+            <div class="stat-sub">Fraud Rate: <strong id="stat-rate">-</strong></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-normal">-</div>
+            <div class="stat-label">Transaksi Normal</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon yellow">🚫</div>
+          <div class="stat-info">
+            <div class="stat-value" id="stat-blocked">-</div>
+            <div class="stat-label">Diblokir</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Amount Stats -->
+      <div class="grid-2 mb-20">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">💰 Total Volume Transaksi</div>
+            </div>
+          </div>
+          <div class="card-body" style="text-align:center">
+            <div style="font-size:32px;font-weight:800;color:var(--primary)" id="stat-amount">-</div>
+            <div style="font-size:13px;color:var(--gray-500);margin-top:4px">Seluruh Transaksi</div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-100)">
+              <div style="font-size:20px;font-weight:700;color:var(--danger)" id="stat-fraud-amount">-</div>
+              <div style="font-size:13px;color:var(--gray-500)">Nilai Transaksi Fraud</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎯 Breakdown Level Risiko</div></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="text-align:center;background:var(--danger-light);border-radius:10px;padding:14px">
+                <div style="font-size:26px;font-weight:800;color:var(--danger)" id="rb-kritis">-</div>
+                <div style="font-size:12px;color:#991b1b;font-weight:600">🚨 KRITIS</div>
+              </div>
+              <div style="text-align:center;background:var(--warning-light);border-radius:10px;padding:14px">
+                <div style="font-size:26px;font-weight:800;color:var(--warning)" id="rb-tinggi">-</div>
+                <div style="font-size:12px;color:#92400e;font-weight:600">⚠️ TINGGI</div>
+              </div>
+              <div style="text-align:center;background:var(--info-light);border-radius:10px;padding:14px">
+                <div style="font-size:26px;font-weight:800;color:var(--info)" id="rb-sedang">-</div>
+                <div style="font-size:12px;color:#0c4a6e;font-weight:600">🔶 SEDANG</div>
+              </div>
+              <div style="text-align:center;background:var(--success-light);border-radius:10px;padding:14px">
+                <div style="font-size:26px;font-weight:800;color:var(--success)" id="rb-rendah">-</div>
+                <div style="font-size:12px;color:#14532d;font-weight:600">✅ RENDAH</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid-2 mb-20">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">📈 Tren Transaksi 30 Hari</div>
+              <div class="card-subtitle">Perbandingan transaksi normal vs fraud</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <canvas id="trendChart" height="200"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">🥧 Distribusi Risiko</div>
+              <div class="card-subtitle">Proporsi per level risiko</div>
+            </div>
+          </div>
+          <div class="card-body" style="display:flex;align-items:center;justify-content:center">
+            <canvas id="riskChart" style="max-height:240px"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-20">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🕐 Pola Transaksi per Jam</div>
+            <div class="card-subtitle">Distribusi transaksi sepanjang hari</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <canvas id="hourlyChart" height="120"></canvas>
+        </div>
+      </div>
+
+      <!-- Top Fraud Table -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🚨 Transaksi Fraud Tertinggi</div>
+            <div class="card-subtitle">5 transaksi dengan fraud score tertinggi</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="showView('history')">Lihat Semua</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID Transaksi</th>
+                <th>Merchant</th>
+                <th>Nominal</th>
+                <th>Fraud Score</th>
+                <th>Level Risiko</th>
+              </tr>
+            </thead>
+            <tbody id="top-fraud-body">
+              <tr><td colspan="5" style="text-align:center;padding:24px">Memuat...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ANALYZE VIEW ============ -->
+    <div class="view" id="view-analyze">
+      <div class="grid-2">
+        <!-- Form -->
+        <div>
+          <div class="card mb-20">
+            <div class="card-header">
+              <div>
+                <div class="card-title">📝 Data Transaksi</div>
+                <div class="card-subtitle">Isi detail transaksi yang ingin dianalisis</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-outline btn-sm" onclick="fillDemoNormal()">Demo Normal</button>
+                <button class="btn btn-outline btn-sm" onclick="fillDemoFraud()">Demo Fraud</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <form id="form-analyze" novalidate>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Nama Merchant / Toko</label>
+                    <input type="text" class="form-control" id="f-merchant"
+                           placeholder="Contoh: Toko Berkah Jaya" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Nama Penerima</label>
+                    <input type="text" class="form-control" id="f-recipient"
+                           placeholder="Contoh: CV Maju Bersama" />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Nominal Transaksi (Rp) <span class="required">*</span></label>
+                  <input type="number" class="form-control" id="f-amount"
+                         placeholder="Contoh: 500000" min="1" required />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Keterangan / Deskripsi</label>
+                  <input type="text" class="form-control" id="f-desc"
+                         placeholder="Contoh: Pembayaran bahan baku" />
+                </div>
+
+                <div style="background:var(--gray-50);border-radius:10px;padding:16px;margin-bottom:16px">
+                  <div style="font-size:13px;font-weight:700;color:var(--gray-600);margin-bottom:12px">
+                    📊 Fitur Kontekstual <span style="font-weight:400;color:var(--gray-400)">(untuk akurasi lebih baik)</span>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Transaksi dalam 1 Jam Terakhir</label>
+                      <input type="number" class="form-control" id="f-count-1h"
+                             value="0" min="0" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Transaksi dalam 24 Jam Terakhir</label>
+                      <input type="number" class="form-control" id="f-count-24h"
+                             value="1" min="0" />
+                    </div>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label class="form-label">Rata-rata Nominal 7 Hari (Rp)</label>
+                      <input type="number" class="form-control" id="f-avg-7d"
+                             placeholder="0" min="0" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Deviasi Nominal</label>
+                      <input type="number" class="form-control" id="f-deviation"
+                             placeholder="0.00" step="0.0001" min="0" />
+                      <div class="form-hint">|(nominal - rata2) / rata2|</div>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Velocity Score (0–1)</label>
+                    <input type="range" class="form-control" id="f-velocity"
+                           min="0" max="1" step="0.01" value="0"
+                           oninput="document.getElementById('vel-val').textContent=parseFloat(this.value).toFixed(2)" />
+                    <div class="form-hint">Nilai: <strong id="vel-val">0.00</strong> — Semakin tinggi = semakin cepat</div>
+                  </div>
+
+                  <div style="display:flex;gap:32px">
+                    <div class="form-group" style="flex:1">
+                      <label class="form-label">Penerima Baru?</label>
+                      <div class="toggle-group">
+                        <label class="toggle">
+                          <input type="checkbox" id="f-new-recipient" />
+                          <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size:13px;color:var(--gray-600)">Belum pernah bertransaksi sebelumnya</span>
+                      </div>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                      <label class="form-label">Perubahan Lokasi?</label>
+                      <div class="toggle-group">
+                        <label class="toggle">
+                          <input type="checkbox" id="f-location-change" />
+                          <span class="toggle-slider"></span>
+                        </label>
+                        <span style="font-size:13px;color:var(--gray-600)">Lokasi berbeda dari biasanya</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display:flex;gap:12px">
+                  <button type="submit" class="btn btn-primary btn-lg" id="btn-analyze" style="flex:1">
+                    🔍 Analisis Transaksi
+                  </button>
+                  <button type="button" class="btn btn-outline" id="btn-reset">
+                    ↺ Reset
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div>
+          <div class="card mb-20">
+            <div class="card-header">
+              <div class="card-title">📋 Hasil Deteksi</div>
+            </div>
+            <div class="card-body">
+              <div id="result-box" class="result-box">
+                <!-- diisi oleh JS -->
+              </div>
+              <div id="result-placeholder" style="text-align:center;padding:60px 20px;color:var(--gray-400)">
+                <div style="font-size:64px;margin-bottom:16px">🛡️</div>
+                <div style="font-size:16px;font-weight:600;color:var(--gray-500)">Siap Menganalisis</div>
+                <div style="font-size:14px;margin-top:8px">Isi form di sebelah kiri dan klik<br><strong>Analisis Transaksi</strong></div>
+                <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+                  <button class="btn btn-outline btn-sm" onclick="fillDemoNormal();document.getElementById('result-placeholder').style.display='none'">
+                    Demo Transaksi Normal
+                  </button>
+                  <button class="btn btn-outline btn-sm" onclick="fillDemoFraud();document.getElementById('result-placeholder').style.display='none'">
+                    Demo Transaksi Fraud
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panduan -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">💡 Panduan Level Risiko</div></div>
+            <div class="card-body" style="font-size:14px">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#fee2e2;border-radius:8px">
+                  <span style="font-size:20px">🚨</span>
+                  <div><strong style="color:#991b1b">KRITIS (≥75%)</strong><br><span style="font-size:12px;color:#7f1d1d">Transaksi diblokir otomatis. Investigasi segera.</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#fef3c7;border-radius:8px">
+                  <span style="font-size:20px">⚠️</span>
+                  <div><strong style="color:#92400e">TINGGI (50–75%)</strong><br><span style="font-size:12px;color:#78350f">Perlu review manual sebelum disetujui.</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#e0f2fe;border-radius:8px">
+                  <span style="font-size:20px">🔶</span>
+                  <div><strong style="color:#0c4a6e">SEDANG (30–50%)</strong><br><span style="font-size:12px;color:#164e63">Pantau dan verifikasi dengan UMKM.</span></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px;background:#dcfce7;border-radius:8px">
+                  <span style="font-size:20px">✅</span>
+                  <div><strong style="color:#14532d">RENDAH (&lt;30%)</strong><br><span style="font-size:12px;color:#166534">Transaksi normal, disetujui otomatis.</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ HISTORY VIEW ============ -->
+    <div class="view" id="view-history">
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:12px">
+          <div class="card-title">📋 Riwayat Transaksi</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <select class="form-control" id="filter-fraud" style="width:160px">
+              <option value="">Semua Transaksi</option>
+              <option value="true">Fraud Saja</option>
+              <option value="false">Normal Saja</option>
+            </select>
+            <select class="form-control" id="filter-risk" style="width:140px">
+              <option value="">Semua Risiko</option>
+              <option value="KRITIS">Kritis</option>
+              <option value="TINGGI">Tinggi</option>
+              <option value="SEDANG">Sedang</option>
+              <option value="RENDAH">Rendah</option>
+            </select>
+            <select class="form-control" id="filter-status" style="width:140px">
+              <option value="">Semua Status</option>
+              <option value="BLOCKED">Blocked</option>
+              <option value="REVIEW">Review</option>
+              <option value="APPROVED">Approved</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="loadHistory(0)">🔍 Filter</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Transaksi</th>
+                <th>Merchant</th>
+                <th>Nominal</th>
+                <th>Fraud Score</th>
+                <th>Level Risiko</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+              <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400)">Memuat data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="page-info" id="history-page-info">-</div>
+          <button class="btn btn-outline btn-sm" id="btn-prev" disabled>← Prev</button>
+          <button class="btn btn-outline btn-sm" id="btn-next" disabled>Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MODEL VIEW ============ -->
+    <div class="view" id="view-model">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:10px">
+        <button class="btn btn-outline" onclick="loadModelInfo()">🔄 Refresh</button>
+        <button class="btn btn-primary" id="btn-retrain">🔁 Latih Ulang Model</button>
+      </div>
+      <div id="model-info-content">
+        <div style="text-align:center;padding:60px"><span class="spinner dark"></span></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===================== MODAL ===================== -->
+<div id="modal-detail" style="
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+  z-index:999;align-items:center;justify-content:center;padding:20px
+">
+  <div style="
+    background:#fff;border-radius:16px;max-width:700px;width:100%;
+    max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)
+  ">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:700">Detail Transaksi</div>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray-400)">×</button>
+    </div>
+    <div id="modal-body" style="padding:24px"></div>
+  </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<div id="toast-container"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
