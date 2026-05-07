@@ -1,69 +1,55 @@
-/**
- * App Controller — Sistem Deteksi Penipuan UMKM
- * Kelompok 6: Farrel, Farzad, Hafif, Arung
- */
+// ============================================================
+// Navigasi
+// ============================================================
+const viewTitles = {
+  dashboard: { title: 'Dashboard', sub: 'Ringkasan pemeriksaan bon transaksi' },
+  periksa:   { title: 'Periksa Bon', sub: 'Periksa keaslian bon / struk dari e-commerce' },
+  riwayat:   { title: 'Riwayat Pemeriksaan', sub: 'Semua bon yang pernah diperiksa' },
+};
 
-// ============================================================
-// Navigation
-// ============================================================
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-  const view = document.getElementById(`view-${name}`);
-  const nav = document.querySelector(`[data-view="${name}"]`);
-
-  if (view) view.classList.add('active');
-  if (nav) nav.classList.add('active');
-
-  // Update topbar
-  const titles = {
-    dashboard: { title: 'Dashboard', sub: 'Ringkasan deteksi penipuan transaksi UMKM' },
-    analyze: { title: 'Analisis Transaksi', sub: 'Periksa transaksi apakah terindikasi penipuan' },
-    history: { title: 'Riwayat Transaksi', sub: 'Semua transaksi yang telah dianalisis' },
-    model: { title: 'Informasi Model AI', sub: 'Performa dan konfigurasi model deteksi' },
-  };
-  const info = titles[name] || {};
-  document.getElementById('topbar-title').textContent = info.title || '';
-  document.getElementById('topbar-subtitle').textContent = info.sub || '';
-
-  // Load data per view
+  document.getElementById(`view-${name}`)?.classList.add('active');
+  document.querySelector(`[data-view="${name}"]`)?.classList.add('active');
+  const t = viewTitles[name] || {};
+  document.getElementById('topbar-title').textContent = t.title || '';
+  document.getElementById('topbar-subtitle').textContent = t.sub || '';
   if (name === 'dashboard') loadDashboard();
-  if (name === 'history') loadHistory();
-  if (name === 'model') loadModelInfo();
+  if (name === 'riwayat') loadRiwayat(0);
+}
+
+function reloadCurrentView() {
+  const active = document.querySelector('.view.active');
+  if (!active) return;
+  const name = active.id.replace('view-', '');
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'riwayat') loadRiwayat(0);
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    const view = item.dataset.view;
-    if (view) showView(view);
-  });
+  item.addEventListener('click', () => { if (item.dataset.view) showView(item.dataset.view); });
 });
 
 // ============================================================
 // Dashboard
 // ============================================================
-let chartsInitialized = false;
-let trendChart, riskChart, hourlyChart;
+let trendChart, riskChart;
 
 async function loadDashboard() {
   try {
-    const [summary, trend, risk, hourly] = await Promise.all([
-      API.getSummary(),
-      API.getTrend(30),
-      API.getRiskDistribution(),
-      API.getHourlyPattern(),
+    const [summary, trend, risk] = await Promise.all([
+      API.getSummary(), API.getTrend(30), API.getRiskDistribution()
     ]);
-
-    renderSummaryCards(summary);
-    renderCharts(trend, risk, hourly);
+    renderSummary(summary);
+    renderCharts(trend, risk);
     loadTopFraud();
   } catch (e) {
     showToast('Gagal memuat dashboard: ' + e.message, 'danger');
   }
 }
 
-function renderSummaryCards(s) {
+function renderSummary(s) {
   document.getElementById('stat-total').textContent = s.total_transactions.toLocaleString('id-ID');
   document.getElementById('stat-fraud').textContent = s.total_fraud.toLocaleString('id-ID');
   document.getElementById('stat-normal').textContent = s.total_normal.toLocaleString('id-ID');
@@ -72,108 +58,35 @@ function renderSummaryCards(s) {
   document.getElementById('stat-amount').textContent = formatRupiah(s.total_amount_idr);
   document.getElementById('stat-fraud-amount').textContent = formatRupiah(s.fraud_amount_idr);
 
-  // Risk breakdown
   const rb = s.risk_breakdown;
-  document.getElementById('rb-kritis').textContent = rb.KRITIS || 0;
-  document.getElementById('rb-tinggi').textContent = rb.TINGGI || 0;
-  document.getElementById('rb-sedang').textContent = rb.SEDANG || 0;
-  document.getElementById('rb-rendah').textContent = rb.RENDAH || 0;
+  document.getElementById('rb-berbahaya').textContent = rb.BERBAHAYA ?? rb.KRITIS ?? 0;
+  document.getElementById('rb-berisiko').textContent = rb.BERISIKO ?? rb.TINGGI ?? 0;
+  document.getElementById('rb-waspada').textContent = rb.WASPADA ?? rb.SEDANG ?? 0;
+  document.getElementById('rb-aman').textContent = rb.AMAN ?? rb.RENDAH ?? 0;
 }
 
-function renderCharts(trend, risk, hourly) {
-  // Tren chart
-  const trendLabels = trend.data.map(d => d.date.slice(5));
-  const trendNormal = trend.data.map(d => d.normal);
-  const trendFraud = trend.data.map(d => d.fraud);
-
+function renderCharts(trend, risk) {
   if (trendChart) trendChart.destroy();
   trendChart = new Chart(document.getElementById('trendChart'), {
     type: 'line',
     data: {
-      labels: trendLabels,
+      labels: trend.data.map(d => d.date.slice(5)),
       datasets: [
-        {
-          label: 'Normal',
-          data: trendNormal,
-          borderColor: '#16a34a',
-          backgroundColor: 'rgba(22,163,74,.08)',
-          fill: true,
-          tension: .3,
-          pointRadius: 2,
-        },
-        {
-          label: 'Fraud',
-          data: trendFraud,
-          borderColor: '#dc2626',
-          backgroundColor: 'rgba(220,38,38,.08)',
-          fill: true,
-          tension: .3,
-          pointRadius: 2,
-        },
+        { label: 'Valid', data: trend.data.map(d => d.normal), borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,.08)', fill: true, tension: .3, pointRadius: 2 },
+        { label: 'Penipuan', data: trend.data.map(d => d.fraud), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,.08)', fill: true, tension: .3, pointRadius: 2 },
       ],
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: { mode: 'index' },
-      },
-      scales: {
-        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
-        x: { grid: { display: false } },
-      },
-    },
+    options: { responsive: true, plugins: { legend: { position: 'top' }, tooltip: { mode: 'index' } }, scales: { y: { beginAtZero: true, grid: { color: '#f3f4f6' } }, x: { grid: { display: false } } } },
   });
-
-  // Risk doughnut
-  const riskLabels = risk.data.map(d => d.risk_level);
-  const riskCounts = risk.data.map(d => d.count);
-  const riskColors = ['#16a34a', '#2563eb', '#d97706', '#dc2626'];
 
   if (riskChart) riskChart.destroy();
   riskChart = new Chart(document.getElementById('riskChart'), {
     type: 'doughnut',
     data: {
-      labels: riskLabels,
-      datasets: [{
-        data: riskCounts,
-        backgroundColor: riskColors,
-        borderWidth: 2,
-        borderColor: '#fff',
-      }],
+      labels: risk.data.map(d => d.risk_level),
+      datasets: [{ data: risk.data.map(d => d.count), backgroundColor: ['#16a34a','#2563eb','#d97706','#dc2626'], borderWidth: 2, borderColor: '#fff' }],
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom' },
-      },
-      cutout: '65%',
-    },
-  });
-
-  // Hourly bar
-  const hLabels = hourly.data.map(d => `${d.hour}:00`);
-  const hNormal = hourly.data.map(d => d.normal);
-  const hFraud = hourly.data.map(d => d.fraud);
-
-  if (hourlyChart) hourlyChart.destroy();
-  hourlyChart = new Chart(document.getElementById('hourlyChart'), {
-    type: 'bar',
-    data: {
-      labels: hLabels,
-      datasets: [
-        { label: 'Normal', data: hNormal, backgroundColor: 'rgba(22,163,74,.7)', borderRadius: 4 },
-        { label: 'Fraud', data: hFraud, backgroundColor: 'rgba(220,38,38,.7)', borderRadius: 4 },
-      ],
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'top' } },
-      scales: {
-        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
-        x: { grid: { display: false } },
-      },
-    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '65%' },
   });
 }
 
@@ -182,58 +95,150 @@ async function loadTopFraud() {
     const data = await API.getTopFraud(5);
     const tbody = document.getElementById('top-fraud-body');
     if (!data.data.length) {
-      tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:var(--gray-400);padding:20px;text-align:center">Belum ada transaksi fraud</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--gray-400)">Belum ada penipuan terdeteksi</td></tr>`;
       return;
     }
-    tbody.innerHTML = data.data.map(t => `
-      <tr>
-        <td><code style="font-size:12px">${t.transaction_id}</code></td>
-        <td>${t.merchant_name || '-'}</td>
-        <td>${formatRupiah(t.amount)}</td>
-        <td>${scoreBar(t.fraud_score)}</td>
-        <td>${riskBadge(t.risk_level)}</td>
-      </tr>
-    `).join('');
-  } catch (e) {}
+    tbody.innerHTML = data.data.map(t => `<tr>
+      <td><code style="font-size:11px;color:var(--primary)">${t.transaction_id}</code></td>
+      <td>${truncate(t.merchant_name, 22)}</td>
+      <td style="font-weight:700">${formatRupiah(t.amount)}</td>
+      <td>${scoreBar(t.fraud_score)}</td>
+      <td>${riskBadge(t.risk_level)}</td>
+    </tr>`).join('');
+  } catch(e) {}
 }
 
 // ============================================================
-// Analyze Transaction Form
+// Parser Teks Bon
 // ============================================================
-document.getElementById('form-analyze').addEventListener('submit', async (e) => {
+function parseReceiptText() {
+  const text = document.getElementById('receipt-text').value;
+  if (!text.trim()) { showToast('Tempel teks bon terlebih dahulu', 'warning'); return; }
+
+  // Ekstrak total
+  const totalMatch = text.match(/total[^:]*:?\s*Rp\.?\s*([\d.,]+)/i) ||
+                     text.match(/bayar[^:]*:?\s*Rp\.?\s*([\d.,]+)/i);
+  if (totalMatch) {
+    document.getElementById('f-total').value = totalMatch[1].replace(/[.,]/g, '').replace(/(\d+)(\d{3})/, '$1$2');
+  }
+
+  // Ekstrak subtotal
+  const subtotalMatch = text.match(/subtotal[^:]*:?\s*Rp\.?\s*([\d.,]+)/i) ||
+                        text.match(/harga[^:]*:?\s*Rp\.?\s*([\d.,]+)/i);
+  if (subtotalMatch) {
+    document.getElementById('f-subtotal').value = subtotalMatch[1].replace(/[.,]/g, '');
+  }
+
+  // Ekstrak diskon
+  const discMatch = text.match(/diskon[^:]*:?\s*Rp\.?\s*([\d.,]+)/i) ||
+                    text.match(/voucher[^:]*:?\s*Rp\.?\s*([\d.,]+)/i) ||
+                    text.match(/potongan[^:]*:?\s*Rp\.?\s*([\d.,]+)/i);
+  if (discMatch) {
+    document.getElementById('f-discount').value = discMatch[1].replace(/[.,]/g, '');
+  }
+
+  // Ekstrak order ID
+  const orderMatch = text.match(/(?:no\.?\s*pesanan|order\s*id|invoice)[:\s]+([A-Z0-9\-\/]+)/i);
+  if (orderMatch) document.getElementById('f-order-id').value = orderMatch[1].trim();
+
+  // Deteksi platform
+  const textLow = text.toLowerCase();
+  const platformSel = document.getElementById('f-platform');
+  if (textLow.includes('shopee')) platformSel.value = 'Shopee';
+  else if (textLow.includes('tokopedia')) platformSel.value = 'Tokopedia';
+  else if (textLow.includes('lazada')) platformSel.value = 'Lazada';
+  else if (textLow.includes('bukalapak')) platformSel.value = 'Bukalapak';
+  else if (textLow.includes('tiktok')) platformSel.value = 'TikTok Shop';
+
+  // Deteksi tanda bahaya
+  const urgentWords = /segera|darurat|transfer sekarang|stok terakhir|habis|batas waktu|jangan sampai/i;
+  if (urgentWords.test(text)) {
+    document.getElementById('f-urgent').checked = true;
+    showToast('⚠️ Terdeteksi kata-kata mendesak di bon ini!', 'warning');
+  }
+
+  const transferPribadi = /rekening pribadi|no\.?\s*rek|a\/n|atas nama|gopay|ovo|dana/i;
+  const bukanGateway = /transfer ke|kirim ke|bayar ke/i;
+  if (transferPribadi.test(text) && bukanGateway.test(text)) {
+    document.getElementById('f-transfer-pribadi').checked = true;
+  }
+
+  // Platform tidak dikenal
+  if (textLow.includes('whatsapp') || textLow.includes('wa.me') || textLow.includes('telegram')) {
+    document.getElementById('f-platform-unverified').checked = true;
+    platformSel.value = 'WhatsApp/Pribadi';
+  }
+
+  hitungDiskon();
+  showToast('✅ Data berhasil diekstrak dari teks bon', 'success');
+  showView('periksa');
+}
+
+function hitungDiskon() {
+  const subtotal = parseFloat(document.getElementById('f-subtotal').value) || 0;
+  const discount = parseFloat(document.getElementById('f-discount').value) || 0;
+  const total = parseFloat(document.getElementById('f-total').value) || 0;
+  const hint = document.getElementById('diskon-hint');
+
+  if (subtotal > 0 && total > 0) {
+    const pct = Math.round((1 - total / subtotal) * 100);
+    if (pct >= 70) {
+      hint.innerHTML = `<span style="color:var(--danger);font-weight:600">⚠️ Diskon ${pct}% — sangat mencurigakan!</span>`;
+    } else if (pct >= 40) {
+      hint.innerHTML = `<span style="color:var(--warning);font-weight:600">🔶 Diskon ${pct}% — perlu diperiksa lebih lanjut</span>`;
+    } else if (pct > 0) {
+      hint.innerHTML = `<span style="color:var(--gray-500)">Diskon ${pct}% dari subtotal</span>`;
+    } else {
+      hint.textContent = '';
+    }
+  }
+}
+
+// ============================================================
+// Form Submit
+// ============================================================
+document.getElementById('form-periksa').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = document.getElementById('btn-analyze');
-  const resultBox = document.getElementById('result-box');
+  const btn = document.getElementById('btn-periksa');
+  const total = parseFloat(document.getElementById('f-total').value);
+  if (!total || total <= 0) { showToast('Isi total pembayaran terlebih dahulu', 'warning'); return; }
 
-  setLoading(btn, true, 'Menganalisis...');
-  resultBox.className = 'result-box';
+  setLoading(btn, true);
+  document.getElementById('result-placeholder').style.display = 'none';
+  document.getElementById('result-box').className = 'result-box';
 
-  const now = new Date();
+  const subtotal = parseFloat(document.getElementById('f-subtotal').value) || total;
+  const discount = parseFloat(document.getElementById('f-discount').value) || 0;
+  const platformUnverified = document.getElementById('f-platform-unverified').checked;
+  const platform = document.getElementById('f-platform').value;
+
   const payload = {
-    merchant_name: document.getElementById('f-merchant').value || undefined,
-    amount: parseFloat(document.getElementById('f-amount').value),
-    recipient_name: document.getElementById('f-recipient').value || undefined,
+    platform: platform || undefined,
+    seller_name: document.getElementById('f-seller').value || undefined,
+    order_id: document.getElementById('f-order-id').value || undefined,
     description: document.getElementById('f-desc').value || undefined,
-    transaction_count_1h: parseInt(document.getElementById('f-count-1h').value) || 0,
-    transaction_count_24h: parseInt(document.getElementById('f-count-24h').value) || 0,
-    avg_amount_7d: parseFloat(document.getElementById('f-avg-7d').value) || 0,
-    amount_deviation: parseFloat(document.getElementById('f-deviation').value) || 0,
-    is_new_recipient: document.getElementById('f-new-recipient').checked,
-    location_change: document.getElementById('f-location-change').checked,
-    velocity_score: parseFloat(document.getElementById('f-velocity').value) || 0,
+    total_amount: total,
+    subtotal: subtotal,
+    discount_amount: discount,
+    item_count: parseInt(document.getElementById('f-item-count').value) || 1,
+    is_cod: document.getElementById('f-cod').checked,
+    is_transfer_pribadi: document.getElementById('f-transfer-pribadi').checked,
+    platform_verified: !platformUnverified && !['WhatsApp/Pribadi', 'Lainnya', ''].includes(platform),
+    seller_age_days: parseInt(document.getElementById('f-seller-age').value) || 365,
+    has_urgent_words: document.getElementById('f-urgent').checked,
+    price_ratio: parseFloat(document.getElementById('f-price-ratio').value) || 1.0,
   };
 
   try {
-    const result = await API.analyzeTransaction(payload);
+    const result = await API.periksaBon(payload);
     renderResult(result);
     showToast(
-      result.is_fraud
-        ? `⚠️ Terdeteksi FRAUD! Risk: ${result.risk_level}`
-        : '✅ Transaksi terlihat normal',
-      result.is_fraud ? 'danger' : 'success',
+      result.is_fraud ? `🚨 Bon ini terindikasi ${result.risk_level}!` : '✅ Bon terlihat valid',
+      result.is_fraud ? 'danger' : 'success'
     );
   } catch (e) {
     showToast('Error: ' + e.message, 'danger');
+    document.getElementById('result-placeholder').style.display = '';
   } finally {
     setLoading(btn, false);
   }
@@ -242,11 +247,14 @@ document.getElementById('form-analyze').addEventListener('submit', async (e) => 
 function renderResult(r) {
   const box = document.getElementById('result-box');
   const pct = Math.round(r.fraud_score * 100);
+  let cls, icon, title, titleColor;
 
-  let cls = 'safe', icon = '✅', title = 'Transaksi AMAN', titleColor = '#16a34a';
-  if (r.is_fraud) {
-    if (r.risk_level === 'KRITIS') { cls = 'fraud'; icon = '🚨'; title = 'PENIPUAN KRITIS!'; titleColor = '#dc2626'; }
-    else { cls = 'warning'; icon = '⚠️'; title = 'TERINDIKASI PENIPUAN'; titleColor = '#d97706'; }
+  if (!r.is_fraud) {
+    cls = 'aman'; icon = '✅'; title = 'BON TERLIHAT VALID'; titleColor = '#16a34a';
+  } else if (r.risk_level === 'BERBAHAYA') {
+    cls = 'bahaya'; icon = '🚨'; title = 'PENIPUAN BERBAHAYA!'; titleColor = '#dc2626';
+  } else {
+    cls = 'berisiko'; icon = '⚠️'; title = 'BON MENCURIGAKAN'; titleColor = '#d97706';
   }
 
   box.className = `result-box ${cls} show`;
@@ -255,408 +263,241 @@ function renderResult(r) {
       <span class="result-icon">${icon}</span>
       <div>
         <div class="result-title" style="color:${titleColor}">${title}</div>
-        <div class="result-subtitle">ID: ${r.transaction_id} | Status: ${r.status}</div>
+        <div class="result-sub">No. Bon: ${r.transaction_id} &nbsp;|&nbsp; Status: ${r.status}</div>
       </div>
       <div style="margin-left:auto">${riskBadge(r.risk_level)}</div>
     </div>
 
-    <div class="result-grid">
+    <div class="result-metrics">
       <div class="result-metric">
-        <div class="metric-value" style="color:${titleColor}">${pct}%</div>
-        <div class="metric-label">Fraud Score</div>
+        <div class="metric-val" style="color:${titleColor}">${pct}%</div>
+        <div class="metric-lbl">Skor Risiko</div>
       </div>
       <div class="result-metric">
-        <div class="metric-value">${formatRupiah(r.amount)}</div>
-        <div class="metric-label">Nominal Transaksi</div>
+        <div class="metric-val">${formatRupiah(r.total_amount)}</div>
+        <div class="metric-lbl">Nilai Transaksi</div>
       </div>
       <div class="result-metric">
-        <div class="metric-value">${r.risk_level}</div>
-        <div class="metric-label">Level Risiko</div>
+        <div class="metric-val">${r.discount_pct}%</div>
+        <div class="metric-lbl">Diskon</div>
       </div>
     </div>
 
-    <div style="margin:12px 0;background:rgba(0,0,0,.06);border-radius:8px;padding:14px">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--gray-700)">Skor Detail Model</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
-        <div>Isolation Forest: <strong>${Math.round(r.score_detail.isolation_forest * 100)}%</strong></div>
-        <div>Local Outlier Factor: <strong>${Math.round(r.score_detail.local_outlier_factor * 100)}%</strong></div>
-        <div>Rule-Based: <strong>${Math.round(r.score_detail.rule_based * 100)}%</strong></div>
-      </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--gray-700)">
+      📋 Temuan Pemeriksaan:
     </div>
+    <ul class="reasons-list">
+      ${r.explanation.map(e => `<li>${e}</li>`).join('')}
+    </ul>
 
-    <div>
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--gray-700)">
-        📋 Analisis Sistem:
-      </div>
-      <ul class="reasons-list">
-        ${r.explanation.map(e => `<li>${e}</li>`).join('')}
-      </ul>
-    </div>
+    ${r.is_fraud ? `
+    <div style="margin-top:14px;padding:12px 14px;background:rgba(220,38,38,.08);border-radius:8px;font-size:13px;color:#7f1d1d">
+      <strong>💡 Saran:</strong> Jangan lakukan pembayaran. Laporkan ke platform resmi atau hubungi bank Anda.
+    </div>` : `
+    <div style="margin-top:14px;padding:12px 14px;background:rgba(22,163,74,.08);border-radius:8px;font-size:13px;color:#14532d">
+      <strong>💡 Tetap waspada:</strong> Selalu verifikasi ulang melalui aplikasi resmi sebelum membayar.
+    </div>`}
   `;
   box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// Reset form
-document.getElementById('btn-reset').addEventListener('click', () => {
-  document.getElementById('form-analyze').reset();
+// ============================================================
+// Demo
+// ============================================================
+function demoValid() {
+  document.getElementById('f-platform').value = 'Tokopedia';
+  document.getElementById('f-order-id').value = 'TKP-20240501-8821';
+  document.getElementById('f-seller').value = 'Official Store Samsung';
+  document.getElementById('f-desc').value = 'Samsung Galaxy A54 5G';
+  document.getElementById('f-subtotal').value = 4500000;
+  document.getElementById('f-discount').value = 450000;
+  document.getElementById('f-total').value = 4050000;
+  document.getElementById('f-item-count').value = 1;
+  document.getElementById('f-seller-age').value = 1200;
+  document.getElementById('f-price-ratio').value = '1.0';
+  document.getElementById('f-transfer-pribadi').checked = false;
+  document.getElementById('f-cod').checked = false;
+  document.getElementById('f-urgent').checked = false;
+  document.getElementById('f-platform-unverified').checked = false;
+  hitungDiskon();
+  showView('periksa');
+}
+
+function demoPenipuan() {
+  document.getElementById('f-platform').value = 'WhatsApp/Pribadi';
+  document.getElementById('f-order-id').value = 'WA-TOKO-001';
+  document.getElementById('f-seller').value = 'Toko HP Murah Meriah';
+  document.getElementById('f-desc').value = 'iPhone 15 Pro Max 256GB BNIB';
+  document.getElementById('f-subtotal').value = 21000000;
+  document.getElementById('f-discount').value = 18500000;
+  document.getElementById('f-total').value = 2500000;
+  document.getElementById('f-item-count').value = 1;
+  document.getElementById('f-seller-age').value = 3;
+  document.getElementById('f-price-ratio').value = '0.1';
+  document.getElementById('f-transfer-pribadi').checked = true;
+  document.getElementById('f-cod').checked = false;
+  document.getElementById('f-urgent').checked = true;
+  document.getElementById('f-platform-unverified').checked = true;
+  hitungDiskon();
+  showView('periksa');
+}
+
+function resetForm() {
+  document.getElementById('form-periksa').reset();
+  document.getElementById('receipt-text').value = '';
   document.getElementById('result-box').className = 'result-box';
-});
-
-// Auto-fill avg dan deviation dari amount
-document.getElementById('f-amount').addEventListener('input', function() {
-  const amount = parseFloat(this.value) || 0;
-  const avg7d = document.getElementById('f-avg-7d');
-  if (!avg7d.value && amount > 0) {
-    avg7d.value = Math.round(amount * 0.9);
-  }
-  const avgVal = parseFloat(avg7d.value) || amount;
-  if (avgVal > 0) {
-    document.getElementById('f-deviation').value = ((Math.abs(amount - avgVal) / avgVal)).toFixed(4);
-  }
-});
+  document.getElementById('result-placeholder').style.display = '';
+  document.getElementById('diskon-hint').textContent = '';
+}
 
 // ============================================================
-// Transaction History
+// Riwayat
 // ============================================================
-let historyPage = 0;
+let riwayatPage = 0;
 const PAGE_SIZE = 15;
 
-async function loadHistory(page = 0) {
-  historyPage = page;
-  const tbody = document.getElementById('history-body');
-  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px"><span class="spinner dark"></span> Memuat...</td></tr>`;
+async function loadRiwayat(page = 0) {
+  riwayatPage = page;
+  const tbody = document.getElementById('riwayat-body');
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px"><span class="spinner dark"></span></td></tr>`;
 
   try {
-    const filterFraud = document.getElementById('filter-fraud').value;
-    const filterRisk = document.getElementById('filter-risk').value;
-    const filterStatus = document.getElementById('filter-status').value;
-
     const params = { skip: page * PAGE_SIZE, limit: PAGE_SIZE };
-    if (filterFraud !== '') params.is_fraud = filterFraud;
-    if (filterRisk) params.risk_level = filterRisk;
-    if (filterStatus) params.status = filterStatus;
+    const ff = document.getElementById('filter-fraud').value;
+    const fr = document.getElementById('filter-risk').value;
+    const fs = document.getElementById('filter-status').value;
+    if (ff !== '') params.is_fraud = ff;
+    if (fr) params.risk_level = fr;
+    if (fs) params.status = fs;
 
     const data = await API.listTransactions(params);
-    renderHistoryTable(data);
+    renderRiwayat(data);
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:24px">Error: ${e.message}</td></tr>`;
   }
 }
 
-function renderHistoryTable(data) {
-  const tbody = document.getElementById('history-body');
-  document.getElementById('history-page-info').textContent =
-    `Menampilkan ${data.skip + 1}–${Math.min(data.skip + data.limit, data.total)} dari ${data.total} transaksi`;
+function renderRiwayat(data) {
+  const tbody = document.getElementById('riwayat-body');
+  document.getElementById('riwayat-page-info').textContent =
+    `${data.skip + 1}–${Math.min(data.skip + data.limit, data.total)} dari ${data.total} bon`;
 
   if (!data.data.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📭</div><h3>Tidak Ada Transaksi</h3><p>Belum ada data transaksi yang sesuai filter.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div style="text-align:center;padding:48px;color:var(--gray-400)">
+      <div style="font-size:40px;margin-bottom:10px">📭</div>
+      <div>Tidak ada data</div></div></td></tr>`;
     return;
   }
 
-  tbody.innerHTML = data.data.map(t => `
-    <tr>
-      <td>
-        <code style="font-size:11px;color:var(--primary)">${t.transaction_id}</code>
-        <div style="font-size:11px;color:var(--gray-400)">${formatDate(t.created_at)}</div>
-      </td>
-      <td>${truncate(t.merchant_name, 20) || '<span style="color:var(--gray-400)">-</span>'}</td>
-      <td style="font-weight:700">${formatRupiah(t.amount)}</td>
-      <td>${scoreBar(t.fraud_score)}</td>
-      <td>${riskBadge(t.risk_level)}</td>
-      <td>${statusBadge(t.status)}</td>
-      <td>
-        <button class="btn btn-outline btn-sm" onclick="showTransactionDetail('${t.transaction_id}')">
-          Detail
-        </button>
-      </td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = data.data.map(t => `<tr>
+    <td>
+      <code style="font-size:11px;color:var(--primary)">${t.transaction_id}</code>
+      <div style="font-size:11px;color:var(--gray-400)">${formatDate(t.created_at)}</div>
+    </td>
+    <td>${truncate(t.merchant_name, 22)}</td>
+    <td style="font-weight:700">${formatRupiah(t.amount)}</td>
+    <td>${scoreBar(t.fraud_score)}</td>
+    <td>${riskBadge(t.risk_level)}</td>
+    <td>${statusBadge(t.status)}</td>
+    <td><button class="btn btn-outline btn-sm" onclick="showDetail('${t.transaction_id}')">Detail</button></td>
+  </tr>`).join('');
 
-  // Pagination buttons
-  document.getElementById('btn-prev').disabled = historyPage === 0;
-  document.getElementById('btn-next').disabled = (historyPage + 1) * PAGE_SIZE >= data.total;
+  document.getElementById('btn-prev').disabled = riwayatPage === 0;
+  document.getElementById('btn-next').disabled = (riwayatPage + 1) * PAGE_SIZE >= data.total;
 }
 
-document.getElementById('btn-prev').addEventListener('click', () => loadHistory(historyPage - 1));
-document.getElementById('btn-next').addEventListener('click', () => loadHistory(historyPage + 1));
-
-['filter-fraud', 'filter-risk', 'filter-status'].forEach(id => {
-  document.getElementById(id).addEventListener('change', () => loadHistory(0));
+document.getElementById('btn-prev').addEventListener('click', () => loadRiwayat(riwayatPage - 1));
+document.getElementById('btn-next').addEventListener('click', () => loadRiwayat(riwayatPage + 1));
+['filter-fraud','filter-risk','filter-status'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => loadRiwayat(0));
 });
 
 // ============================================================
-// Transaction Detail Modal
+// Modal Detail
 // ============================================================
-async function showTransactionDetail(txId) {
+async function showDetail(txId) {
   const modal = document.getElementById('modal-detail');
   const body = document.getElementById('modal-body');
   modal.style.display = 'flex';
   body.innerHTML = `<div style="text-align:center;padding:40px"><span class="spinner dark"></span></div>`;
-
   try {
     const t = await API.getTransaction(txId);
-    body.innerHTML = renderDetailHTML(t);
+    const pct = Math.round(t.fraud_score * 100);
+    body.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+        <div>
+          <div style="font-size:16px;font-weight:800">${t.transaction_id}</div>
+          <div style="font-size:13px;color:var(--gray-500)">${formatDate(t.created_at)}</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px">${riskBadge(t.risk_level)} ${statusBadge(t.status)}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;font-size:13px">
+        ${dr('Toko / Penjual', t.merchant_name)}
+        ${dr('Platform', t.description)}
+        ${dr('Nilai Transaksi', formatRupiah(t.amount))}
+        ${dr('Skor Risiko', pct + '%')}
+      </div>
+
+      <div style="background:var(--gray-50);border-radius:10px;padding:14px;margin-bottom:14px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px">Detail Skor Deteksi</div>
+        ${sr('Isolation Forest', t.score_detail.isolation_forest)}
+        ${sr('Local Outlier Factor', t.score_detail.local_outlier_factor)}
+        ${sr('Aturan Bisnis', t.score_detail.rule_based)}
+        <div style="border-top:1px solid var(--gray-200);margin-top:8px;padding-top:8px">
+          ${sr('SKOR FINAL', t.fraud_score, true)}
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px">📋 Temuan</div>
+        <ul class="reasons-list" style="background:var(--gray-50);border-radius:10px;padding:10px 10px 10px 28px">
+          ${(t.explanation||[]).map(e=>`<li>${e}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-success btn-sm" onclick="updateStatus('${t.transaction_id}','AMAN')">✅ Tandai Aman</button>
+        <button class="btn btn-danger btn-sm" onclick="updateStatus('${t.transaction_id}','DIBLOKIR')">🚫 Blokir</button>
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">Tutup</button>
+      </div>`;
   } catch (e) {
-    body.innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
+    body.innerHTML = `<div style="color:var(--danger);padding:20px">Error: ${e.message}</div>`;
   }
 }
 
-function renderDetailHTML(t) {
-  const pct = Math.round(t.fraud_score * 100);
-  return `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <div>
-        <div style="font-size:18px;font-weight:800">${t.transaction_id}</div>
-        <div style="font-size:13px;color:var(--gray-500)">${formatDate(t.created_at)}</div>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        ${riskBadge(t.risk_level)} ${statusBadge(t.status)}
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      ${detailRow('Merchant', t.merchant_name)}
-      ${detailRow('Penerima', t.recipient_name)}
-      ${detailRow('Nominal', formatRupiah(t.amount))}
-      ${detailRow('Rata-rata 7 hari', formatRupiah(t.avg_amount_7d))}
-      ${detailRow('Jam Transaksi', t.hour + ':00')}
-      ${detailRow('Hari', namaHari(t.day_of_week))}
-      ${detailRow('Transaksi/1 jam', t.transaction_count_1h)}
-      ${detailRow('Transaksi/24 jam', t.transaction_count_24h)}
-      ${detailRow('Penerima Baru', t.is_new_recipient ? '⚠️ Ya' : '✅ Tidak')}
-      ${detailRow('Perubahan Lokasi', t.location_change ? '⚠️ Ya' : '✅ Tidak')}
-      ${detailRow('Velocity Score', (t.velocity_score * 100).toFixed(1) + '%')}
-      ${detailRow('Amount Deviation', (t.amount_deviation * 100).toFixed(1) + '%')}
-    </div>
-
-    <div style="background:var(--gray-50);border-radius:10px;padding:16px;margin-bottom:16px">
-      <div style="font-weight:700;margin-bottom:12px">Skor Deteksi Model</div>
-      ${scoreRowHTML('Isolation Forest', t.score_detail.isolation_forest)}
-      ${scoreRowHTML('Local Outlier Factor', t.score_detail.local_outlier_factor)}
-      ${scoreRowHTML('Rule-Based', t.score_detail.rule_based)}
-      <div style="border-top:1px solid var(--gray-200);margin-top:10px;padding-top:10px">
-        ${scoreRowHTML('FRAUD SCORE FINAL', t.fraud_score, true)}
-      </div>
-    </div>
-
-    <div style="margin-bottom:16px">
-      <div style="font-weight:700;margin-bottom:8px">📋 Analisis Sistem</div>
-      <ul class="reasons-list" style="background:var(--gray-50);border-radius:10px;padding:12px 12px 12px 32px">
-        ${(t.explanation || []).map(e => `<li>${e}</li>`).join('')}
-      </ul>
-    </div>
-
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn btn-success btn-sm" onclick="updateTxStatus('${t.transaction_id}', 'APPROVED')">✅ Approve</button>
-      <button class="btn btn-danger btn-sm" onclick="updateTxStatus('${t.transaction_id}', 'BLOCKED')">🚫 Block</button>
-      <button class="btn btn-outline btn-sm" onclick="closeModal()">Tutup</button>
-    </div>
-  `;
+function dr(label, value) {
+  return `<div style="background:var(--gray-50);border-radius:8px;padding:10px 14px">
+    <div style="font-size:11px;color:var(--gray-500);font-weight:600">${label}</div>
+    <div style="font-weight:600;margin-top:2px">${value || '-'}</div>
+  </div>`;
 }
 
-function detailRow(label, value) {
-  return `
-    <div style="background:var(--gray-50);border-radius:8px;padding:10px 14px">
-      <div style="font-size:11px;color:var(--gray-500);font-weight:600">${label}</div>
-      <div style="font-size:14px;font-weight:600;margin-top:2px">${value || '-'}</div>
-    </div>`;
-}
-
-function scoreRowHTML(label, score, bold = false) {
+function sr(label, score, bold = false) {
   const pct = Math.round(score * 100);
-  let color = '#16a34a';
-  if (pct >= 75) color = '#dc2626';
-  else if (pct >= 50) color = '#d97706';
-  else if (pct >= 30) color = '#2563eb';
-  return `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;${bold ? 'font-weight:800' : ''}">
-      <span style="flex:1;font-size:13px">${label}</span>
-      <div class="score-bar" style="flex:2"><div class="score-bar-fill" style="width:${pct}%;background:${color}"></div></div>
-      <span style="font-size:13px;font-weight:700;color:${color};min-width:36px;text-align:right">${pct}%</span>
-    </div>`;
+  const color = pct >= 75 ? '#dc2626' : pct >= 50 ? '#d97706' : pct >= 30 ? '#2563eb' : '#16a34a';
+  return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;${bold?'font-weight:800':''}">
+    <span style="flex:1;font-size:13px">${label}</span>
+    <div class="score-bar" style="flex:2"><div class="score-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    <span style="font-size:13px;font-weight:700;color:${color};min-width:34px;text-align:right">${pct}%</span>
+  </div>`;
 }
 
-async function updateTxStatus(txId, status) {
+async function updateStatus(txId, status) {
   try {
     await API.updateStatus(txId, status);
-    showToast(`Status diperbarui: ${status}`, 'success');
+    showToast('Status diperbarui: ' + status, 'success');
     closeModal();
-    loadHistory(historyPage);
+    loadRiwayat(riwayatPage);
   } catch (e) {
-    showToast('Gagal update status: ' + e.message, 'danger');
+    showToast('Gagal: ' + e.message, 'danger');
   }
 }
 
 function closeModal() {
   document.getElementById('modal-detail').style.display = 'none';
 }
-
-document.getElementById('modal-detail').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-// ============================================================
-// Model Info
-// ============================================================
-async function loadModelInfo() {
-  const container = document.getElementById('model-info-content');
-  container.innerHTML = `<div style="text-align:center;padding:40px"><span class="spinner dark"></span> Memuat informasi model...</div>`;
-
-  try {
-    const info = await API.getModelInfo();
-    renderModelInfo(info, container);
-  } catch (e) {
-    container.innerHTML = `<div class="alert alert-danger">Gagal memuat: ${e.message}</div>`;
-  }
-}
-
-function renderModelInfo(info, container) {
-  if (info.status !== 'ready') {
-    container.innerHTML = `
-      <div class="alert alert-warning">
-        ⚠️ Model belum dilatih. Klik tombol "Latih Model" untuk memulai.
-      </div>`;
-    return;
-  }
-
-  const m = info.metrics || {};
-  const weights = info.ensemble_weights || [0, 0, 0];
-
-  container.innerHTML = `
-    <div class="grid-2 mb-20">
-      <div class="card">
-        <div class="card-header"><div class="card-title">🤖 Informasi Model</div></div>
-        <div class="card-body">
-          <table style="width:100%;font-size:14px">
-            ${infoRow('Jenis Model', info.model_type)}
-            ${infoRow('Status', '<span class="badge badge-success">✅ Aktif</span>')}
-            ${infoRow('Terlatih pada', info.trained_at ? new Date(info.trained_at).toLocaleString('id-ID') : '-')}
-            ${infoRow('Contamination Rate', (info.contamination * 100).toFixed(1) + '%')}
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header"><div class="card-title">⚖️ Bobot Ensemble</div></div>
-        <div class="card-body">
-          ${weightRow('Isolation Forest', weights[0])}
-          ${weightRow('Local Outlier Factor', weights[1])}
-          ${weightRow('Rule-Based Logic', weights[2])}
-        </div>
-      </div>
-    </div>
-
-    <div class="card mb-20">
-      <div class="card-header"><div class="card-title">📊 Metrik Performa Model</div></div>
-      <div class="card-body">
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;text-align:center">
-          ${metricPill('Akurasi', m.accuracy)}
-          ${metricPill('Precision', m.precision)}
-          ${metricPill('Recall', m.recall)}
-          ${metricPill('F1-Score', m.f1_score)}
-          ${metricPill('ROC-AUC', m.roc_auc)}
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><div class="card-title">📚 Tentang Algoritma</div></div>
-      <div class="card-body" style="font-size:14px;line-height:1.7;color:var(--gray-700)">
-        <p style="margin-bottom:12px">
-          Sistem menggunakan <strong>Ensemble Anomaly Detection</strong> yang menggabungkan tiga pendekatan:
-        </p>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-          <div style="background:var(--primary-light);border-radius:10px;padding:14px">
-            <div style="font-weight:700;color:var(--primary);margin-bottom:6px">🌲 Isolation Forest</div>
-            <div style="font-size:13px">Mengisolasi anomali melalui pohon keputusan acak. Efektif untuk outlier global dengan nominal atau pola tidak biasa.</div>
-          </div>
-          <div style="background:var(--info-light);border-radius:10px;padding:14px">
-            <div style="font-weight:700;color:var(--info);margin-bottom:6px">🔍 Local Outlier Factor</div>
-            <div style="font-size:13px">Mendeteksi anomali berdasarkan kepadatan lokal. Efektif untuk outlier kontekstual yang berbeda dari tetangganya.</div>
-          </div>
-          <div style="background:var(--warning-light);border-radius:10px;padding:14px">
-            <div style="font-weight:700;color:var(--warning);margin-bottom:6px">📋 Rule-Based Logic</div>
-            <div style="font-size:13px">Aturan bisnis UMKM: jam transaksi, frekuensi, rasio nominal, dan perubahan lokasi mendadak.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function infoRow(label, value) {
-  return `<tr><td style="padding:8px 0;color:var(--gray-500);font-weight:500">${label}</td><td style="padding:8px 0;font-weight:600">${value || '-'}</td></tr>`;
-}
-
-function weightRow(label, weight) {
-  const pct = Math.round(weight * 100);
-  return `
-    <div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-        <span style="font-weight:600">${label}</span>
-        <span style="font-weight:700;color:var(--primary)">${pct}%</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-    </div>`;
-}
-
-function metricPill(label, value) {
-  const pct = value ? Math.round(value * 100) : 0;
-  let color = '#16a34a';
-  if (pct < 70) color = '#dc2626';
-  else if (pct < 85) color = '#d97706';
-  return `
-    <div>
-      <div style="font-size:28px;font-weight:800;color:${color}">${pct}%</div>
-      <div style="font-size:12px;color:var(--gray-500);font-weight:600">${label}</div>
-    </div>`;
-}
-
-// Retrain button
-document.getElementById('btn-retrain').addEventListener('click', async function() {
-  if (!confirm('Latih ulang model? Proses ini membutuhkan beberapa menit.')) return;
-  setLoading(this, true, 'Melatih...');
-  try {
-    const result = await API.retrainModel();
-    showToast('✅ Model berhasil dilatih ulang!', 'success', 6000);
-    loadModelInfo();
-  } catch (e) {
-    showToast('Gagal melatih ulang: ' + e.message, 'danger');
-  } finally {
-    setLoading(this, false);
-  }
-});
-
-// ============================================================
-// Quick Analyze demo buttons
-// ============================================================
-function fillDemoNormal() {
-  document.getElementById('f-merchant').value = 'Toko Sembako Berkah';
-  document.getElementById('f-amount').value = 250000;
-  document.getElementById('f-recipient').value = 'Supplier Indofood';
-  document.getElementById('f-desc').value = 'Pembelian stok barang bulanan';
-  document.getElementById('f-count-1h').value = 1;
-  document.getElementById('f-count-24h').value = 4;
-  document.getElementById('f-avg-7d').value = 300000;
-  document.getElementById('f-deviation').value = 0.17;
-  document.getElementById('f-new-recipient').checked = false;
-  document.getElementById('f-location-change').checked = false;
-  document.getElementById('f-velocity').value = 0.05;
-}
-
-function fillDemoFraud() {
-  document.getElementById('f-merchant').value = 'Toko Berkah Jaya';
-  document.getElementById('f-amount').value = 85000000;
-  document.getElementById('f-recipient').value = 'Rekening Tidak Dikenal';
-  document.getElementById('f-desc').value = 'Transfer darurat';
-  document.getElementById('f-count-1h').value = 12;
-  document.getElementById('f-count-24h').value = 45;
-  document.getElementById('f-avg-7d').value = 300000;
-  document.getElementById('f-deviation').value = 283.0;
-  document.getElementById('f-new-recipient').checked = true;
-  document.getElementById('f-location-change').checked = true;
-  document.getElementById('f-velocity').value = 0.95;
-}
+document.getElementById('modal-detail').addEventListener('click', e => { if (e.target === document.getElementById('modal-detail')) closeModal(); });
 
 // ============================================================
 // Init

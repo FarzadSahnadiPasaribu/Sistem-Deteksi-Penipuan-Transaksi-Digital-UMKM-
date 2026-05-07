@@ -1,6 +1,6 @@
 """
-Generator data transaksi UMKM sintetis untuk training dan testing model.
-Menghasilkan transaksi normal dan anomali (penipuan).
+Generator data transaksi bon e-commerce sintetis.
+Fitur berbasis data yang ada di bon/struk digital UMKM.
 """
 
 import numpy as np
@@ -10,28 +10,27 @@ import random
 import os
 
 
-def generate_umkm_transactions(
+FEATURE_COLUMNS = [
+    "total_amount",         # Total pembayaran di bon
+    "discount_pct",         # Persentase diskon (0-1)
+    "subtotal_ratio",       # total / subtotal (harusnya mendekati 1)
+    "item_count",           # Jumlah item dalam bon
+    "hour",                 # Jam transaksi
+    "is_cod",               # Metode COD = lebih berisiko
+    "is_transfer_pribadi",  # Transfer ke rekening pribadi
+    "seller_age_days",      # Umur akun penjual (hari)
+    "price_ratio",          # Rasio harga vs rata-rata pasar
+    "has_urgent_words",     # Ada kata mendesak (segera/darurat/dll)
+    "platform_verified",    # Platform resmi (1) vs tidak dikenal (0)
+]
+
+
+def generate_receipt_transactions(
     n_normal: int = 1000,
     n_fraud: int = 50,
     seed: int = 42,
     save_path: str = None,
 ) -> pd.DataFrame:
-    """
-    Menghasilkan dataset transaksi UMKM dengan label fraud/normal.
-
-    Fitur yang dihasilkan:
-    - amount: Nominal transaksi (Rp)
-    - hour: Jam transaksi (0-23)
-    - day_of_week: Hari dalam seminggu (0=Senin)
-    - transaction_count_1h: Jumlah transaksi dalam 1 jam terakhir
-    - transaction_count_24h: Jumlah transaksi dalam 24 jam terakhir
-    - avg_amount_7d: Rata-rata nominal 7 hari terakhir
-    - amount_deviation: Deviasi nominal dari rata-rata
-    - is_new_recipient: Apakah penerima baru
-    - location_change: Perubahan lokasi mendadak
-    - is_weekend: Apakah akhir pekan
-    - velocity_score: Skor kecepatan transaksi
-    """
     np.random.seed(seed)
     random.seed(seed)
 
@@ -39,126 +38,98 @@ def generate_umkm_transactions(
 
     # --- Transaksi Normal ---
     for i in range(n_normal):
-        hour = int(np.random.choice(
-            range(8, 22),
-            p=np.array([0.05, 0.08, 0.12, 0.12, 0.10, 0.10, 0.08, 0.08,
-                        0.08, 0.07, 0.06, 0.04, 0.01, 0.01]) / 1.0
-        ))
-        day = random.randint(0, 6)
-        amount = max(10_000, np.random.lognormal(mean=13.5, sigma=0.8))
-        amount = round(amount / 500) * 500
-
-        avg_7d = amount * np.random.uniform(0.7, 1.3)
-        deviation = abs(amount - avg_7d) / (avg_7d + 1)
+        subtotal = max(10_000, np.random.lognormal(mean=13.5, sigma=0.8))
+        subtotal = round(subtotal / 500) * 500
+        discount_pct = np.random.uniform(0, 0.30)
+        total = subtotal * (1 - discount_pct)
+        total = round(total / 500) * 500
 
         records.append({
-            "transaction_id": f"TRX-{i+1:05d}",
-            "amount": amount,
-            "hour": hour,
-            "day_of_week": day,
-            "transaction_count_1h": random.randint(0, 3),
-            "transaction_count_24h": random.randint(1, 15),
-            "avg_amount_7d": round(avg_7d),
-            "amount_deviation": round(deviation, 4),
-            "is_new_recipient": int(random.random() < 0.15),
-            "location_change": int(random.random() < 0.05),
-            "is_weekend": int(day >= 5),
-            "velocity_score": round(np.random.uniform(0, 0.3), 4),
+            "transaction_id": f"BON-{i+1:05d}",
+            "total_amount": total,
+            "discount_pct": round(discount_pct, 4),
+            "subtotal_ratio": round(total / subtotal if subtotal > 0 else 1, 4),
+            "item_count": random.randint(1, 8),
+            "hour": int(np.random.choice(range(7, 22), p=np.array([0.04,0.08,0.12,0.12,0.11,0.10,0.09,0.09,0.08,0.07,0.05,0.03,0.01,0.01,0.01]) / 1.0)),
+            "is_cod": int(random.random() < 0.20),
+            "is_transfer_pribadi": 0,
+            "seller_age_days": random.randint(180, 3000),
+            "price_ratio": round(np.random.uniform(0.85, 1.15), 4),
+            "has_urgent_words": 0,
+            "platform_verified": 1,
             "is_fraud": 0,
         })
 
-    # --- Transaksi Fraud (Anomali) ---
+    # --- Transaksi Fraud ---
     fraud_patterns = [
-        # Pola 1: Nominal sangat besar di luar jam kerja
+        # Pola 1: Diskon ekstrem + penjual baru + transfer pribadi
         lambda: {
-            "amount": round(np.random.uniform(50_000_000, 200_000_000) / 500) * 500,
-            "hour": random.choice([0, 1, 2, 3, 23]),
-            "day_of_week": random.randint(0, 6),
-            "transaction_count_1h": random.randint(0, 1),
-            "transaction_count_24h": random.randint(1, 3),
-            "avg_amount_7d": round(np.random.uniform(100_000, 500_000)),
-            "amount_deviation": round(np.random.uniform(50, 200), 4),
-            "is_new_recipient": 1,
-            "location_change": 1,
-            "is_weekend": int(random.randint(0, 6) >= 5),
-            "velocity_score": round(np.random.uniform(0.8, 1.0), 4),
+            "total_amount": round(np.random.uniform(500_000, 5_000_000) / 500) * 500,
+            "discount_pct": round(np.random.uniform(0.75, 0.98), 4),
+            "subtotal_ratio": round(np.random.uniform(0.02, 0.25), 4),
+            "item_count": random.randint(1, 3),
+            "hour": random.choice([0,1,2,3,22,23]),
+            "is_cod": 0,
+            "is_transfer_pribadi": 1,
+            "seller_age_days": random.randint(1, 30),
+            "price_ratio": round(np.random.uniform(0.05, 0.20), 4),
+            "has_urgent_words": 1,
+            "platform_verified": 0,
         },
-        # Pola 2: Transaksi berulang sangat cepat
+        # Pola 2: Total tidak sesuai subtotal + platform tidak dikenal
         lambda: {
-            "amount": round(np.random.uniform(500_000, 5_000_000) / 500) * 500,
-            "hour": random.randint(8, 22),
-            "day_of_week": random.randint(0, 6),
-            "transaction_count_1h": random.randint(15, 30),
-            "transaction_count_24h": random.randint(50, 100),
-            "avg_amount_7d": round(np.random.uniform(200_000, 800_000)),
-            "amount_deviation": round(np.random.uniform(2, 10), 4),
-            "is_new_recipient": int(random.random() < 0.7),
-            "location_change": int(random.random() < 0.5),
-            "is_weekend": int(random.randint(0, 6) >= 5),
-            "velocity_score": round(np.random.uniform(0.7, 1.0), 4),
-        },
-        # Pola 3: Penerima baru + lokasi berubah + nominal tidak wajar
-        lambda: {
-            "amount": round(np.random.uniform(10_000_000, 80_000_000) / 500) * 500,
+            "total_amount": round(np.random.uniform(200_000, 2_000_000) / 500) * 500,
+            "discount_pct": round(np.random.uniform(0.60, 0.90), 4),
+            "subtotal_ratio": round(np.random.uniform(0.05, 0.30), 4),
+            "item_count": random.randint(5, 20),
             "hour": random.randint(0, 23),
-            "day_of_week": random.randint(0, 6),
-            "transaction_count_1h": random.randint(1, 5),
-            "transaction_count_24h": random.randint(2, 10),
-            "avg_amount_7d": round(np.random.uniform(50_000, 300_000)),
-            "amount_deviation": round(np.random.uniform(20, 100), 4),
-            "is_new_recipient": 1,
-            "location_change": 1,
-            "is_weekend": int(random.randint(0, 6) >= 5),
-            "velocity_score": round(np.random.uniform(0.5, 0.9), 4),
+            "is_cod": int(random.random() < 0.5),
+            "is_transfer_pribadi": int(random.random() < 0.7),
+            "seller_age_days": random.randint(1, 60),
+            "price_ratio": round(np.random.uniform(0.10, 0.35), 4),
+            "has_urgent_words": int(random.random() < 0.8),
+            "platform_verified": 0,
+        },
+        # Pola 3: Nominal besar + transfer pribadi + kata mendesak
+        lambda: {
+            "total_amount": round(np.random.uniform(10_000_000, 50_000_000) / 500) * 500,
+            "discount_pct": round(np.random.uniform(0.40, 0.70), 4),
+            "subtotal_ratio": round(np.random.uniform(0.30, 0.60), 4),
+            "item_count": random.randint(1, 5),
+            "hour": random.choice([0,1,2,3,23]),
+            "is_cod": 0,
+            "is_transfer_pribadi": 1,
+            "seller_age_days": random.randint(5, 90),
+            "price_ratio": round(np.random.uniform(0.15, 0.45), 4),
+            "has_urgent_words": 1,
+            "platform_verified": int(random.random() < 0.2),
         },
     ]
 
     for i in range(n_fraud):
-        pattern_fn = random.choice(fraud_patterns)
-        data = pattern_fn()
-        data["transaction_id"] = f"TRX-FRAUD-{i+1:04d}"
+        data = random.choice(fraud_patterns)()
+        data["transaction_id"] = f"BON-FRAUD-{i+1:04d}"
         data["is_fraud"] = 1
         records.append(data)
 
     df = pd.DataFrame(records)
     df = df.sample(frac=1, random_state=seed).reset_index(drop=True)
 
-    # Tambahkan timestamp
     base_time = datetime(2024, 1, 1, 8, 0, 0)
     df["timestamp"] = [
         base_time + timedelta(hours=random.randint(0, 24 * 90))
         for _ in range(len(df))
     ]
-    df["timestamp"] = pd.to_datetime(df["timestamp"])
 
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         df.to_csv(save_path, index=False)
         print(f"Dataset disimpan: {save_path}")
-        print(f"Total: {len(df)} transaksi | Normal: {(df.is_fraud==0).sum()} | Fraud: {(df.is_fraud==1).sum()}")
+        print(f"Total: {len(df)} | Normal: {(df.is_fraud==0).sum()} | Fraud: {(df.is_fraud==1).sum()}")
 
     return df
 
 
-FEATURE_COLUMNS = [
-    "amount",
-    "hour",
-    "day_of_week",
-    "transaction_count_1h",
-    "transaction_count_24h",
-    "avg_amount_7d",
-    "amount_deviation",
-    "is_new_recipient",
-    "location_change",
-    "is_weekend",
-    "velocity_score",
-]
-
-
 if __name__ == "__main__":
-    df = generate_umkm_transactions(
-        n_normal=1000,
-        n_fraud=50,
-        save_path="../../data/umkm_transactions.csv",
-    )
+    df = generate_receipt_transactions(save_path="../../data/umkm_transactions.csv")
     print(df.head(10).to_string())

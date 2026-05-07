@@ -1,6 +1,5 @@
 """
-Service layer untuk deteksi penipuan.
-Menghubungkan API dengan ML model.
+Service layer: menghubungkan API dengan model deteksi penipuan.
 """
 
 import os
@@ -12,61 +11,48 @@ from typing import Optional
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../ml"))
 
-from fraud_detector import UMKMFraudDetector
-from data_generator import generate_umkm_transactions
+from fraud_detector import FraudDetector
 from train import train_and_evaluate
 
-
-_detector: Optional[UMKMFraudDetector] = None
+_detector: Optional[FraudDetector] = None
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "../../ml/saved_models")
 
 
-def get_detector() -> UMKMFraudDetector:
-    """Singleton: muat model sekali, gunakan berulang kali."""
+def get_detector() -> FraudDetector:
     global _detector
-
     if _detector is not None:
         return _detector
-
     meta_path = os.path.join(MODEL_PATH, "metadata.json")
     if os.path.exists(meta_path):
-        _detector = UMKMFraudDetector.load(MODEL_PATH)
-        print("[FraudService] Model dimuat dari disk.")
+        _detector = FraudDetector.load(MODEL_PATH)
+        print("[Service] Model dimuat dari disk.")
     else:
-        print("[FraudService] Model belum ada, memulai training otomatis...")
+        print("[Service] Model belum ada, mulai training...")
         _detector, _ = train_and_evaluate()
-        print("[FraudService] Training selesai.")
-
     return _detector
 
 
-def analyze_transaction(transaction_data: dict) -> dict:
-    """Analisis satu transaksi, kembalikan hasil deteksi."""
+def analyze_receipt(data: dict) -> dict:
     detector = get_detector()
-
     features = {
-        "amount": float(transaction_data.get("amount", 0)),
-        "hour": int(transaction_data.get("hour", datetime.now().hour)),
-        "day_of_week": int(transaction_data.get("day_of_week", datetime.now().weekday())),
-        "transaction_count_1h": int(transaction_data.get("transaction_count_1h", 0)),
-        "transaction_count_24h": int(transaction_data.get("transaction_count_24h", 0)),
-        "avg_amount_7d": float(transaction_data.get("avg_amount_7d", 0)),
-        "amount_deviation": float(transaction_data.get("amount_deviation", 0)),
-        "is_new_recipient": int(transaction_data.get("is_new_recipient", 0)),
-        "location_change": int(transaction_data.get("location_change", 0)),
-        "is_weekend": int(transaction_data.get("is_weekend", 0)),
-        "velocity_score": float(transaction_data.get("velocity_score", 0)),
+        "total_amount": float(data.get("total_amount", 0)),
+        "discount_pct": float(data.get("discount_pct", 0)),
+        "subtotal_ratio": float(data.get("subtotal_ratio", 1)),
+        "item_count": int(data.get("item_count", 1)),
+        "hour": int(data.get("hour", datetime.now().hour)),
+        "is_cod": int(data.get("is_cod", 0)),
+        "is_transfer_pribadi": int(data.get("is_transfer_pribadi", 0)),
+        "seller_age_days": int(data.get("seller_age_days", 365)),
+        "price_ratio": float(data.get("price_ratio", 1.0)),
+        "has_urgent_words": int(data.get("has_urgent_words", 0)),
+        "platform_verified": int(data.get("platform_verified", 1)),
     }
-
     result = detector.predict_single(features)
-    result["transaction_id"] = transaction_data.get(
-        "transaction_id", f"TRX-{uuid.uuid4().hex[:8].upper()}"
-    )
+    result["transaction_id"] = data.get("transaction_id", f"BON-{uuid.uuid4().hex[:8].upper()}")
     return result
 
 
 def retrain_model() -> dict:
-    """Re-train ulang model (dipanggil dari API admin)."""
     global _detector
     _detector = None
     detector, metrics = train_and_evaluate()
@@ -79,7 +65,6 @@ def retrain_model() -> dict:
 
 
 def get_model_info() -> dict:
-    """Informasi tentang model yang sedang aktif."""
     meta_path = os.path.join(MODEL_PATH, "metadata.json")
     if not os.path.exists(meta_path):
         return {"status": "not_trained"}
@@ -87,19 +72,21 @@ def get_model_info() -> dict:
     with open(meta_path) as f:
         meta = json.load(f)
 
-    report_path = os.path.join(MODEL_PATH, "../../data/evaluation_report.json")
     metrics = {}
+    trained_at = None
+    report_path = os.path.join(MODEL_PATH, "../../data/evaluation_report.json")
     if os.path.exists(report_path):
         with open(report_path) as f:
             report = json.load(f)
         metrics = report.get("metrics", {})
+        trained_at = report.get("trained_at")
 
     return {
         "status": "ready",
-        "model_type": "Ensemble (Isolation Forest + LOF + Rules)",
+        "model_type": "Ensemble (Isolation Forest + LOF + Aturan Bisnis)",
         "contamination": meta.get("contamination"),
         "ensemble_weights": meta.get("ensemble_weights"),
         "is_trained": meta.get("is_trained"),
         "metrics": metrics,
-        "trained_at": report.get("trained_at") if metrics else None,
+        "trained_at": trained_at,
     }

@@ -28,7 +28,7 @@ def get_summary(db: Session = Depends(get_db)):
     fraud_rate = (total_fraud / total * 100) if total > 0 else 0
 
     risk_breakdown = {}
-    for level in ["RENDAH", "SEDANG", "TINGGI", "KRITIS"]:
+    for level in ["AMAN", "WASPADA", "BERISIKO", "BERBAHAYA", "RENDAH", "SEDANG", "TINGGI", "KRITIS"]:
         count = db.query(func.count(Transaction.id)).filter(
             Transaction.risk_level == level
         ).scalar() or 0
@@ -112,7 +112,7 @@ def get_top_fraud(
 def get_risk_distribution(db: Session = Depends(get_db)):
     """Distribusi transaksi berdasarkan level risiko dan status."""
     result = []
-    for level in ["RENDAH", "SEDANG", "TINGGI", "KRITIS"]:
+    for level in ["AMAN", "WASPADA", "BERISIKO", "BERBAHAYA", "RENDAH", "SEDANG", "TINGGI", "KRITIS"]:
         count = db.query(func.count(Transaction.id)).filter(
             Transaction.risk_level == level
         ).scalar() or 0

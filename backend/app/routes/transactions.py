@@ -8,121 +8,96 @@ import json
 import uuid
 
 from ..models import get_db, Transaction
-from ..services.fraud_service import analyze_transaction
+from ..services.fraud_service import analyze_receipt
 
 router = APIRouter(prefix="/transactions", tags=["Transaksi"])
 
 
-# --- Skema Pydantic ---
+class ReceiptInput(BaseModel):
+    # Info bon
+    platform: Optional[str] = Field(None, example="Shopee")
+    seller_name: Optional[str] = Field(None, example="Toko Elektronik Murah")
+    order_id: Optional[str] = Field(None, example="SPX-20240101-001")
+    description: Optional[str] = Field(None, example="iPhone 14 Pro Max")
 
-class TransactionCreate(BaseModel):
-    merchant_name: Optional[str] = Field(None, example="Toko Berkah Jaya")
-    amount: float = Field(..., gt=0, example=500000)
-    recipient_name: Optional[str] = Field(None, example="CV Maju Bersama")
-    description: Optional[str] = Field(None, example="Pembayaran bahan baku")
+    # Nilai transaksi
+    total_amount: float = Field(..., gt=0, example=500000)
+    subtotal: Optional[float] = Field(None, example=650000)
+    discount_amount: Optional[float] = Field(0, example=150000)
+    item_count: int = Field(1, ge=1, example=1)
 
-    # Fitur kontekstual (opsional — jika tidak diisi, dihitung otomatis)
-    hour: Optional[int] = Field(None, ge=0, le=23)
-    day_of_week: Optional[int] = Field(None, ge=0, le=6)
-    transaction_count_1h: int = Field(0, ge=0, example=1)
-    transaction_count_24h: int = Field(1, ge=0, example=5)
-    avg_amount_7d: float = Field(0, ge=0, example=450000)
-    amount_deviation: float = Field(0, ge=0, example=0.11)
-    is_new_recipient: bool = Field(False)
-    location_change: bool = Field(False)
-    is_weekend: Optional[bool] = None
-    velocity_score: float = Field(0, ge=0, le=1, example=0.05)
+    # Metode pembayaran
+    payment_method: Optional[str] = Field(None, example="Transfer Bank")
+    is_cod: bool = Field(False)
+    is_transfer_pribadi: bool = Field(False)
+    platform_verified: bool = Field(True)
 
+    # Info penjual
+    seller_age_days: int = Field(365, ge=0, example=365)
 
-class TransactionResponse(BaseModel):
-    id: int
-    transaction_id: str
-    merchant_name: Optional[str]
-    amount: float
-    recipient_name: Optional[str]
-    description: Optional[str]
-    is_fraud: bool
-    fraud_score: float
-    risk_level: str
-    explanation: Optional[List[str]]
-    status: str
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
+    # Indikator tambahan
+    has_urgent_words: bool = Field(False)
+    price_ratio: float = Field(1.0, ge=0, le=2, example=1.0)
 
 
-class TransactionDetail(TransactionResponse):
-    hour: int
-    day_of_week: int
-    transaction_count_1h: int
-    transaction_count_24h: int
-    avg_amount_7d: float
-    amount_deviation: float
-    is_new_recipient: bool
-    location_change: bool
-    is_weekend: bool
-    velocity_score: float
-    score_isolation_forest: float
-    score_lof: float
-    score_rule_based: float
-
-
-# --- Endpoints ---
-
-@router.post("/analyze", response_model=dict, summary="Analisis Transaksi Baru")
-def create_and_analyze_transaction(
-    payload: TransactionCreate,
-    db: Session = Depends(get_db),
-):
-    """
-    Kirim transaksi baru untuk dianalisis apakah terindikasi penipuan.
-    Transaksi disimpan ke database beserta hasil deteksi.
-    """
+@router.post("/analyze", summary="Periksa Bon Transaksi")
+def analyze_transaction(payload: ReceiptInput, db: Session = Depends(get_db)):
+    """Periksa apakah bon/struk transaksi terindikasi penipuan."""
     now = datetime.now()
 
-    data = payload.dict()
-    data["hour"] = data.get("hour") if data.get("hour") is not None else now.hour
-    data["day_of_week"] = data.get("day_of_week") if data.get("day_of_week") is not None else now.weekday()
-    data["is_weekend"] = data.get("is_weekend") if data.get("is_weekend") is not None else (now.weekday() >= 5)
+    subtotal = payload.subtotal or payload.total_amount
+    discount_amount = payload.discount_amount or 0
+    discount_pct = min(discount_amount / subtotal, 0.99) if subtotal > 0 else 0
+    subtotal_ratio = payload.total_amount / subtotal if subtotal > 0 else 1.0
 
-    trx_id = f"TRX-{uuid.uuid4().hex[:8].upper()}"
-    data["transaction_id"] = trx_id
+    trx_id = payload.order_id or f"BON-{uuid.uuid4().hex[:8].upper()}"
 
-    # Jalankan deteksi
-    detection = analyze_transaction(data)
+    data = {
+        "transaction_id": trx_id,
+        "total_amount": payload.total_amount,
+        "discount_pct": round(discount_pct, 4),
+        "subtotal_ratio": round(subtotal_ratio, 4),
+        "item_count": payload.item_count,
+        "hour": now.hour,
+        "is_cod": int(payload.is_cod),
+        "is_transfer_pribadi": int(payload.is_transfer_pribadi),
+        "seller_age_days": payload.seller_age_days,
+        "price_ratio": payload.price_ratio,
+        "has_urgent_words": int(payload.has_urgent_words),
+        "platform_verified": int(payload.platform_verified),
+    }
 
-    # Tentukan status transaksi
-    if detection["is_fraud"] and detection["risk_level"] == "KRITIS":
-        status = "BLOCKED"
+    detection = analyze_receipt(data)
+
+    if detection["risk_level"] == "BERBAHAYA":
+        status = "DIBLOKIR"
     elif detection["is_fraud"]:
-        status = "REVIEW"
+        status = "DITINJAU"
     else:
-        status = "APPROVED"
+        status = "AMAN"
 
-    # Simpan ke database
     trx = Transaction(
         transaction_id=trx_id,
-        merchant_name=data.get("merchant_name"),
-        amount=data["amount"],
-        recipient_name=data.get("recipient_name"),
-        description=data.get("description"),
-        hour=data["hour"],
-        day_of_week=data["day_of_week"],
-        transaction_count_1h=data["transaction_count_1h"],
-        transaction_count_24h=data["transaction_count_24h"],
-        avg_amount_7d=data["avg_amount_7d"],
-        amount_deviation=data["amount_deviation"],
-        is_new_recipient=data["is_new_recipient"],
-        location_change=data["location_change"],
-        is_weekend=data["is_weekend"],
-        velocity_score=data["velocity_score"],
+        merchant_name=payload.seller_name,
+        amount=payload.total_amount,
+        recipient_name=payload.platform,
+        description=payload.description,
+        hour=now.hour,
+        day_of_week=now.weekday(),
+        transaction_count_1h=0,
+        transaction_count_24h=0,
+        avg_amount_7d=payload.subtotal or payload.total_amount,
+        amount_deviation=round(abs(1 - subtotal_ratio), 4),
+        is_new_recipient=payload.is_transfer_pribadi,
+        location_change=not payload.platform_verified,
+        is_weekend=(now.weekday() >= 5),
+        velocity_score=round(discount_pct, 4),
         is_fraud=detection["is_fraud"],
         fraud_score=detection["fraud_score"],
         risk_level=detection["risk_level"],
-        score_isolation_forest=detection["score_isolation_forest"],
+        score_isolation_forest=detection["score_if"],
         score_lof=detection["score_lof"],
-        score_rule_based=detection["score_rule_based"],
+        score_rule_based=detection["score_rule"],
         explanation=json.dumps(detection["explanation"], ensure_ascii=False),
         status=status,
     )
@@ -132,25 +107,21 @@ def create_and_analyze_transaction(
 
     return {
         "transaction_id": trx_id,
-        "amount": data["amount"],
-        "merchant_name": data.get("merchant_name"),
-        "recipient_name": data.get("recipient_name"),
+        "platform": payload.platform,
+        "seller_name": payload.seller_name,
+        "total_amount": payload.total_amount,
+        "discount_pct": round(discount_pct * 100, 1),
         "is_fraud": detection["is_fraud"],
         "fraud_score": detection["fraud_score"],
         "risk_level": detection["risk_level"],
         "status": status,
         "explanation": detection["explanation"],
-        "score_detail": {
-            "isolation_forest": detection["score_isolation_forest"],
-            "local_outlier_factor": detection["score_lof"],
-            "rule_based": detection["score_rule_based"],
-        },
         "db_id": trx.id,
-        "created_at": trx.created_at.isoformat(),
+        "checked_at": trx.created_at.isoformat(),
     }
 
 
-@router.get("/", summary="Daftar Semua Transaksi")
+@router.get("/", summary="Riwayat Pemeriksaan Bon")
 def list_transactions(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
@@ -159,7 +130,6 @@ def list_transactions(
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
-    """Ambil daftar transaksi dengan filter opsional."""
     query = db.query(Transaction)
     if is_fraud is not None:
         query = query.filter(Transaction.is_fraud == is_fraud)
@@ -171,30 +141,25 @@ def list_transactions(
     total = query.count()
     items = query.order_by(desc(Transaction.created_at)).offset(skip).limit(limit).all()
 
-    results = []
-    for t in items:
-        results.append({
+    return {
+        "total": total, "skip": skip, "limit": limit,
+        "data": [{
             "id": t.id,
             "transaction_id": t.transaction_id,
             "merchant_name": t.merchant_name,
             "amount": t.amount,
-            "recipient_name": t.recipient_name,
             "is_fraud": t.is_fraud,
             "fraud_score": t.fraud_score,
             "risk_level": t.risk_level,
             "status": t.status,
             "created_at": t.created_at.isoformat() if t.created_at else None,
-        })
+        } for t in items]
+    }
 
-    return {"total": total, "skip": skip, "limit": limit, "data": results}
 
-
-@router.get("/{transaction_id}", summary="Detail Transaksi")
+@router.get("/{transaction_id}", summary="Detail Bon")
 def get_transaction(transaction_id: str, db: Session = Depends(get_db)):
-    """Ambil detail lengkap satu transaksi termasuk skor model."""
-    trx = db.query(Transaction).filter(
-        Transaction.transaction_id == transaction_id
-    ).first()
+    trx = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
     if not trx:
         raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
 
@@ -210,18 +175,7 @@ def get_transaction(transaction_id: str, db: Session = Depends(get_db)):
         "transaction_id": trx.transaction_id,
         "merchant_name": trx.merchant_name,
         "amount": trx.amount,
-        "recipient_name": trx.recipient_name,
         "description": trx.description,
-        "hour": trx.hour,
-        "day_of_week": trx.day_of_week,
-        "transaction_count_1h": trx.transaction_count_1h,
-        "transaction_count_24h": trx.transaction_count_24h,
-        "avg_amount_7d": trx.avg_amount_7d,
-        "amount_deviation": trx.amount_deviation,
-        "is_new_recipient": trx.is_new_recipient,
-        "location_change": trx.location_change,
-        "is_weekend": trx.is_weekend,
-        "velocity_score": trx.velocity_score,
         "is_fraud": trx.is_fraud,
         "fraud_score": trx.fraud_score,
         "risk_level": trx.risk_level,
@@ -236,19 +190,15 @@ def get_transaction(transaction_id: str, db: Session = Depends(get_db)):
     }
 
 
-@router.patch("/{transaction_id}/status", summary="Update Status Transaksi")
+@router.patch("/{transaction_id}/status", summary="Update Status")
 def update_status(
     transaction_id: str,
-    new_status: str = Query(..., regex="^(APPROVED|BLOCKED|REVIEW)$"),
+    new_status: str = Query(..., regex="^(AMAN|DITINJAU|DIBLOKIR)$"),
     db: Session = Depends(get_db),
 ):
-    """Update status transaksi secara manual oleh admin."""
-    trx = db.query(Transaction).filter(
-        Transaction.transaction_id == transaction_id
-    ).first()
+    trx = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
     if not trx:
         raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
-
-    trx.status = new_status.upper()
+    trx.status = new_status
     db.commit()
-    return {"message": "Status berhasil diperbarui", "status": trx.status}
+    return {"message": "Status diperbarui", "status": trx.status}
