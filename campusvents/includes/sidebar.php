@@ -111,6 +111,10 @@ function isActive(string $page, string $dir = ''): string {
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6"  y1="20" x2="6"  y2="14"/></svg>
         Laporan
       </a>
+      <a href="/campusvents/admin/export.php" class="sidebar-link<?= isActive('export.php','admin') ?>">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Ekspor Data
+      </a>
     <?php endif; ?>
 
     <div class="sidebar-divider"></div>

@@ -339,7 +339,19 @@ a.btn.outline:hover{background:#1A1A2E;color:#F5F4F0}
   <div class="links">
     <a href="/campusvents/index.php" class="btn">Buka CampusVents</a>
     <a href="/campusvents/login.php" class="btn outline">Halaman Login</a>
+    <a href="/campusvents/campusvents.sql" class="btn outline" download>
+      ↓ Download SQL
+    </a>
   </div>
+
+  <div class="info-box" style="margin-top:1.5rem;background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.25);border-radius:10px;padding:1rem 1.25rem;font-size:.875rem;color:#0A7C59;display:flex;gap:.75rem;align-items:flex-start">
+    <span style="flex-shrink:0;font-size:1.1rem">ℹ️</span>
+    <span>File <strong>campusvents.sql</strong> tersedia untuk import langsung ke phpMyAdmin atau MySQL CLI. Alternatifnya, kamu sudah bisa langsung login menggunakan akun demo di atas.</span>
+  </div>
+
+  <p style="margin-top:1.25rem;font-size:.8rem;color:#9AA0AD">
+    ⚠️ Hapus file <code style="font-family:'JetBrains Mono',monospace;font-size:.8rem">setup.php</code> setelah instalasi selesai untuk keamanan.
+  </p>
 </div>
 </body>
 </html>

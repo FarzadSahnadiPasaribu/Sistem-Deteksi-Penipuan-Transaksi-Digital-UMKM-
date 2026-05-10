@@ -6,9 +6,10 @@ require_once __DIR__ . '/includes/functions.php';
 $db = getDB();
 
 // Stats
-$totalEvents = $db->query("SELECT COUNT(*) FROM events WHERE status='published'")->fetchColumn();
-$totalUsers  = $db->query("SELECT COUNT(*) FROM users WHERE role='mahasiswa'")->fetchColumn();
-$totalRegs   = $db->query("SELECT COUNT(*) FROM registrations WHERE status != 'cancelled'")->fetchColumn();
+$totalEvents    = $db->query("SELECT COUNT(*) FROM events WHERE status='published'")->fetchColumn();
+$totalUsers     = $db->query("SELECT COUNT(*) FROM users WHERE role='mahasiswa'")->fetchColumn();
+$totalRegs      = $db->query("SELECT COUNT(*) FROM registrations WHERE status != 'cancelled'")->fetchColumn();
+$totalCategories = $db->query("SELECT COUNT(*) FROM categories")->fetchColumn();
 
 // Latest published events
 $latestEvents = $db->query("
@@ -21,6 +22,15 @@ $latestEvents = $db->query("
     WHERE e.status = 'published'
     ORDER BY e.created_at DESC
     LIMIT 6
+")->fetchAll();
+
+// Categories with event counts
+$allCategories = $db->query("
+    SELECT c.*, COUNT(e.id) as event_count
+    FROM categories c
+    LEFT JOIN events e ON e.category_id=c.id AND e.status='published'
+    GROUP BY c.id
+    ORDER BY event_count DESC
 ")->fetchAll();
 
 define('BASE_URL', '/campusvents');
@@ -153,6 +163,10 @@ include __DIR__ . '/includes/header.php';
         <div class="stat-big-number" data-counter="<?= (int)$totalRegs ?: 12400 ?>">0</div>
         <div class="stat-big-label">Total Pendaftaran</div>
       </div>
+      <div class="stat-item">
+        <div class="stat-big-number" data-counter="<?= (int)$totalCategories ?: 8 ?>">0</div>
+        <div class="stat-big-label">Kategori Event</div>
+      </div>
     </div>
   </div>
 </section>
@@ -242,6 +256,59 @@ include __DIR__ . '/includes/header.php';
     </div>
     <?php endif; ?>
     <?php endif; ?>
+  </div>
+</section>
+
+<!-- Categories Showcase -->
+<section class="public-section-alt">
+  <div class="container">
+    <h2 class="public-section-title">Jelajahi Berdasarkan Kategori</h2>
+    <p class="public-section-sub">Dari teknologi hingga seni — temukan event sesuai passion dan minatmu.</p>
+    <div class="accent-divider"></div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--space-4)">
+      <?php foreach ($allCategories as $cat):
+        $badgeClass = getCategoryBadgeClass($cat['name']);
+        $catUrl = isLoggedIn() ? '/campusvents/mahasiswa/katalog.php?cat=' . $cat['id'] : '/campusvents/register.php';
+      ?>
+      <a href="<?= $catUrl ?>" style="display:flex;flex-direction:column;align-items:center;gap:var(--space-3);padding:var(--space-6) var(--space-4);background:var(--clr-bg-card);border:1.5px solid var(--clr-border);border-radius:var(--radius-lg);text-decoration:none;transition:all var(--dur-normal);text-align:center"
+         onmouseenter="this.style.borderColor='<?= htmlspecialchars($cat['color']) ?>';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)';this.style.transform='translateY(-3px)'"
+         onmouseleave="this.style.borderColor='';this.style.boxShadow='';this.style.transform=''">
+        <div style="font-size:2.25rem;line-height:1"><?= $cat['icon'] ?></div>
+        <div style="font-weight:700;font-size:.9375rem;color:var(--clr-text-primary)"><?= htmlspecialchars($cat['name']) ?></div>
+        <span class="badge <?= $badgeClass ?>"><?= $cat['event_count'] ?> event</span>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="public-section" style="background:var(--clr-bg)">
+  <div class="container">
+    <h2 class="public-section-title">Kenapa CampusVents?</h2>
+    <p class="public-section-sub">Platform yang dirancang khusus untuk ekosistem kampus Indonesia.</p>
+    <div class="accent-divider"></div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-6)" class="features-grid">
+      <?php
+      $features = [
+        ['🎯', 'Rekomendasi Personal',     'Sistem merekomendasikan event berdasarkan minat yang kamu pilih saat daftar. Tidak perlu scroll panjang — event terbaik langsung tampil.', '#E94560'],
+        ['🔔', 'Notifikasi Real-Time',     'Dapatkan notifikasi instan saat event baru yang cocok dengan minatmu diterbitkan. Tidak perlu cek manual setiap hari.', '#00C9A7'],
+        ['📱', 'Kode Pendaftaran Unik',    'Setiap pendaftaran menghasilkan kode unik format CV-YYYYMMDD-XXXXX. Tunjukkan saat hadir untuk absensi yang cepat dan akurat.', '#F5A623'],
+        ['🛡️', 'Validasi Event Ketat',     'Setiap event divalidasi admin sebelum dipublikasikan. Hanya event resmi dan berkualitas yang tampil di platform.', '#0069D9'],
+        ['📊', 'Dashboard Panitia Lengkap','Panitia bisa memantau pendaftar, melakukan absensi, dan melihat statistik event secara real-time melalui dashboard khusus.', '#B845CB'],
+        ['📈', 'Laporan & Ekspor Data',    'Admin dapat melihat laporan lengkap dan mengekspor data ke CSV atau SQL backup kapan saja untuk keperluan analitik.', '#0A7C59'],
+      ];
+      foreach ($features as [$icon, $title, $desc, $color]):
+      ?>
+      <div style="padding:var(--space-6);background:var(--clr-bg-card);border:1px solid var(--clr-border);border-radius:var(--radius-lg);border-top:3px solid <?= $color ?>">
+        <div style="font-size:2rem;margin-bottom:var(--space-4)"><?= $icon ?></div>
+        <h4 style="font-size:1rem;font-weight:700;margin-bottom:var(--space-2);color:var(--clr-text-primary)"><?= $title ?></h4>
+        <p style="font-size:.875rem;color:var(--clr-text-secondary);line-height:1.6;margin:0"><?= $desc ?></p>
+      </div>
+      <?php endforeach; ?>
+    </div>
   </div>
 </section>
 
@@ -340,4 +407,8 @@ include __DIR__ . '/includes/header.php';
   </div>
 </footer>
 
+<style>
+@media(max-width:1023px){.features-grid{grid-template-columns:repeat(2,1fr)!important}}
+@media(max-width:600px){.features-grid{grid-template-columns:1fr!important}}
+</style>
 <?php include __DIR__ . '/includes/footer.php'; ?>
