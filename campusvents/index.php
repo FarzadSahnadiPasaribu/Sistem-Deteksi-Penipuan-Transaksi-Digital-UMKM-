@@ -268,7 +268,7 @@ include __DIR__ . '/includes/header.php';
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--space-4)">
       <?php foreach ($allCategories as $cat):
         $badgeClass = getCategoryBadgeClass($cat['name']);
-        $catUrl = isLoggedIn() ? '/campusvents/mahasiswa/katalog.php?cat=' . $cat['id'] : '/campusvents/register.php';
+        $catUrl = isLoggedIn() ? BASE_URL . '/mahasiswa/katalog.php?cat=' . $cat['id'] : BASE_URL . '/register.php';
       ?>
       <a href="<?= $catUrl ?>" style="display:flex;flex-direction:column;align-items:center;gap:var(--space-3);padding:var(--space-6) var(--space-4);background:var(--clr-bg-card);border:1.5px solid var(--clr-border);border-radius:var(--radius-lg);text-decoration:none;transition:all var(--dur-normal);text-align:center"
          onmouseenter="this.style.borderColor='<?= htmlspecialchars($cat['color']) ?>';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)';this.style.transform='translateY(-3px)'"
