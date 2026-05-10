@@ -113,6 +113,12 @@ include '../includes/header.php';
               <button type="submit" class="btn btn-danger btn-sm"
                       data-confirm="Hapus kategori '<?= htmlspecialchars($cat['name']) ?>'?">Hapus</button>
             </form>
+            <?php else: ?>
+            <button type="button" class="btn btn-sm" disabled
+                    title="Tidak bisa dihapus — kategori ini masih digunakan oleh <?= $cat['event_count'] ?> event"
+                    style="opacity:.4;cursor:not-allowed;background:var(--clr-border);color:var(--clr-text-muted)">
+              Hapus
+            </button>
             <?php endif; ?>
           </div>
         </div>
