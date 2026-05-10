@@ -46,11 +46,13 @@ CREATE TABLE `users` (
   `avatar`     VARCHAR(255)     NULL DEFAULT NULL,
   `bio`        TEXT             NULL DEFAULT NULL,
   `is_active`  TINYINT(1)       NOT NULL DEFAULT 1,
+  `verified`   TINYINT(1)       NOT NULL DEFAULT 1 COMMENT '0=pending verifikasi (panitia baru), 1=terverifikasi',
   `created_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `users_email_unique` (`email`),
-  KEY `users_role_index` (`role`)
+  KEY `users_role_index` (`role`),
+  KEY `users_verified_index` (`verified`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

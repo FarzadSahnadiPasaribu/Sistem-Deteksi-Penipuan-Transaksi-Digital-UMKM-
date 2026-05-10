@@ -99,6 +99,12 @@ function isActive(string $page, string $dir = ''): string {
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         Validasi Event
       </a>
+      <?php $pendingPanitiaCount = 0; try { $pendingPanitiaCount = (int)getDB()->query("SELECT COUNT(*) FROM users WHERE role='panitia' AND verified=0 AND is_active=1")->fetchColumn(); } catch(Exception $e){} ?>
+      <a href="<?= BASE_URL ?>/admin/verifikasi_panitia.php" class="sidebar-link<?= isActive('verifikasi_panitia.php','admin') ?>">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Verifikasi Panitia
+        <?php if ($pendingPanitiaCount > 0): ?><span class="sidebar-badge"><?= $pendingPanitiaCount ?></span><?php endif; ?>
+      </a>
       <a href="<?= BASE_URL ?>/admin/kelola_pengguna.php" class="sidebar-link<?= isActive('kelola_pengguna.php','admin') ?>">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         Kelola Pengguna

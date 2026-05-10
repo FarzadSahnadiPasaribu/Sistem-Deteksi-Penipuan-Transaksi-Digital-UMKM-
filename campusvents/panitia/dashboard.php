@@ -38,14 +38,46 @@ include '../includes/header.php';
   <?php include '../includes/sidebar.php'; ?>
 
   <main class="dashboard-main">
+
+    <?php
+    // Cek status verified langsung dari DB (lebih akurat dari session)
+    $verifiedStatus = (int)$db->prepare("SELECT verified FROM users WHERE id=?")->execute([$user['id']]) ?
+        $db->prepare("SELECT verified FROM users WHERE id=?")->execute([$user['id']]) : 1;
+    $verifiedRow = $db->prepare("SELECT verified, is_active FROM users WHERE id=?");
+    $verifiedRow->execute([$user['id']]);
+    $verifiedData = $verifiedRow->fetch();
+    $isVerified   = (int)($verifiedData['verified'] ?? 1);
+    $isActive     = (int)($verifiedData['is_active'] ?? 1);
+    ?>
+
+    <?php if (!$isActive): ?>
+    <div class="alert" style="background:#fff0f0;border:2px solid var(--clr-accent);color:#7a0000;margin-bottom:var(--space-6);padding:var(--space-5);border-radius:var(--radius-lg)">
+      <div style="font-weight:700;font-size:1.05rem;margin-bottom:var(--space-2)">❌ Pendaftaran Panitia Ditolak</div>
+      <p style="margin:0">Maaf, pendaftaran akun panitia kamu ditolak oleh admin. Silakan hubungi admin untuk informasi lebih lanjut atau daftarkan akun baru.</p>
+    </div>
+    <?php elseif (!$isVerified): ?>
+    <div class="alert" style="background:#fffbeb;border:2px solid #f5a623;color:#7a4f00;margin-bottom:var(--space-6);padding:var(--space-5);border-radius:var(--radius-lg)">
+      <div style="font-weight:700;font-size:1.05rem;margin-bottom:var(--space-2)">⏳ Akun Menunggu Verifikasi Admin</div>
+      <p style="margin:0 0 var(--space-3)">Akun panitia kamu sedang dalam proses verifikasi oleh admin CampusVents. Proses ini membutuhkan waktu maksimal <strong>1×24 jam</strong>.</p>
+      <p style="margin:0;font-size:.875rem;opacity:.8">Kamu belum bisa membuat event sampai akun diverifikasi. Cek notifikasi untuk update status verifikasi.</p>
+    </div>
+    <?php endif; ?>
+
     <div class="greeting-card">
       <div class="greeting-date">Dashboard Panitia</div>
       <h2 class="greeting-title">Halo, <strong><?= htmlspecialchars(explode(' ', $user['name'])[0]) ?></strong></h2>
       <p class="greeting-sub">Kelola event kampusmu dengan mudah dan efisien.</p>
+      <?php if ($isVerified && $isActive): ?>
       <a href="<?= BASE_URL ?>/panitia/buat_event.php" class="btn btn-accent" style="margin-top:var(--space-5);display:inline-flex">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Buat Event Baru
       </a>
+      <?php else: ?>
+      <span class="btn" style="margin-top:var(--space-5);display:inline-flex;background:var(--clr-border);color:var(--clr-text-muted);cursor:not-allowed" title="Akun belum terverifikasi">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Buat Event (Perlu Verifikasi)
+      </span>
+      <?php endif; ?>
     </div>
 
     <div class="stats-grid" style="margin-bottom:var(--space-8)">

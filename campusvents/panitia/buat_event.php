@@ -8,6 +8,16 @@ $user  = currentUser();
 $db    = getDB();
 $error = '';
 
+// Blokir panitia yang belum terverifikasi
+$vRow = $db->prepare("SELECT verified, is_active FROM users WHERE id=?");
+$vRow->execute([$user['id']]);
+$vData = $vRow->fetch();
+if (!($vData['verified'] ?? 0) || !($vData['is_active'] ?? 0)) {
+    setFlash('Akun kamu belum diverifikasi admin. Kamu belum bisa membuat event.', 'error');
+    header('Location: ' . BASE_URL . '/panitia/dashboard.php');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         $error = 'Token tidak valid.';
