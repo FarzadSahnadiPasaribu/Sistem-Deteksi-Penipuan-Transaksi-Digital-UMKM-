@@ -33,7 +33,6 @@ $allCategories = $db->query("
     ORDER BY event_count DESC
 ")->fetchAll();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Beranda');
 include __DIR__ . '/includes/header.php';
 ?>

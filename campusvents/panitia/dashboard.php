@@ -29,7 +29,6 @@ $recentEvents = $db->prepare("
 $recentEvents->execute([$user['id']]);
 $recentEvts = $recentEvents->fetchAll();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Dashboard Panitia');
 include '../includes/header.php';
 ?>

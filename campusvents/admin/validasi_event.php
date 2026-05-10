@@ -71,7 +71,6 @@ $pendingEvents = $db->query("
     ORDER BY e.created_at ASC
 ")->fetchAll();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Validasi Event');
 include '../includes/header.php';
 ?>

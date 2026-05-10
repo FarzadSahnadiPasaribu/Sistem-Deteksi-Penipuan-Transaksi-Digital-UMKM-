@@ -88,7 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmt->execute([$user['id']]);
 $userData = $stmt->fetch();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Profil Saya');
 include '../includes/header.php';
 ?>

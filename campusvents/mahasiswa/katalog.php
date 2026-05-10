@@ -61,7 +61,6 @@ $categories = $db->query("SELECT id, name FROM categories ORDER BY name")->fetch
 
 $hasFilter = $search || $catId || $sort !== 'terbaru';
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Katalog Event');
 include '../includes/header.php';
 ?>

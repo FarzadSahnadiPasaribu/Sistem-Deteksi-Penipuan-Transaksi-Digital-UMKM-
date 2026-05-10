@@ -52,7 +52,6 @@ $days_id = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 $months_id = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 $today = $days_id[date('w')] . ', ' . date('j') . ' ' . $months_id[date('n')-1] . ' ' . date('Y');
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Dashboard');
 include '../includes/header.php';
 ?>

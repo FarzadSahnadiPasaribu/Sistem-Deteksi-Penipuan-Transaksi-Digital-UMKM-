@@ -36,7 +36,6 @@ $notifs = $stmt->fetchAll();
 $unreadCount = getUnreadNotificationCount($user['id']);
 $csrf        = generateCsrfToken();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Notifikasi');
 include '../includes/header.php';
 ?>

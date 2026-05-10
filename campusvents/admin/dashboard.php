@@ -46,7 +46,6 @@ $pendingEvents = $db->query("
     LIMIT 5
 ")->fetchAll();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Dashboard Admin');
 include '../includes/header.php';
 ?>

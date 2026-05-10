@@ -147,7 +147,6 @@ $stats = [
     'db_size'        => $db->query("SELECT ROUND(SUM(data_length + index_length) / 1024, 2) FROM information_schema.tables WHERE table_schema = DATABASE()")->fetchColumn(),
 ];
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Ekspor Data');
 include '../includes/header.php';
 ?>

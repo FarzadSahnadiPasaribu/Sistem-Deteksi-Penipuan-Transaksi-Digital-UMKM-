@@ -74,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $categories = $db->query("SELECT id, name FROM categories ORDER BY name")->fetchAll();
 $csrf       = generateCsrfToken();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Edit Event');
 include '../includes/header.php';
 ?>

@@ -66,7 +66,6 @@ $recentRegs = $db->query("
     LIMIT 10
 ")->fetchAll();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Laporan & Statistik');
 include '../includes/header.php';
 ?>

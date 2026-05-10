@@ -74,7 +74,6 @@ $categories = $db->query("SELECT id, name FROM categories ORDER BY name")->fetch
 $csrf       = generateCsrfToken();
 $minDate    = date('Y-m-d\TH:i', strtotime('+1 day'));
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Buat Event');
 include '../includes/header.php';
 ?>

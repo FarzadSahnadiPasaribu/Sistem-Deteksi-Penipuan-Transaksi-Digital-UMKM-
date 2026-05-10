@@ -86,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 $csrf = generateCsrfToken();
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', htmlspecialchars($event['title']));
 include '../includes/header.php';
 ?>

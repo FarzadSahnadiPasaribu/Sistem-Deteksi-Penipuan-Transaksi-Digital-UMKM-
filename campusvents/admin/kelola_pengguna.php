@@ -63,7 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Kelola Pengguna');
 include '../includes/header.php';
 ?>

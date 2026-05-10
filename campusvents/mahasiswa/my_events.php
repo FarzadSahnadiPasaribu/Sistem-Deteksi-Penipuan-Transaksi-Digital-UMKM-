@@ -29,7 +29,6 @@ $stmt = $db->prepare("
 $stmt->execute([$user['id']]);
 $myEvents = $stmt->fetchAll();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Event Saya');
 include '../includes/header.php';
 ?>

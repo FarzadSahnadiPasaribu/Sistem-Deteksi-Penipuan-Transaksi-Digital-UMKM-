@@ -46,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $csrf = generateCsrfToken();
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Masuk');
 include __DIR__ . '/includes/header.php';
 ?>

@@ -68,7 +68,6 @@ $categories = $db->query("
     ORDER BY c.name
 ")->fetchAll();
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Kelola Kategori');
 include '../includes/header.php';
 ?>

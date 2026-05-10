@@ -66,7 +66,6 @@ if ($event) {
     $registrations = $regStmt->fetchAll();
 }
 
-define('BASE_URL', '/campusvents');
 define('PAGE_TITLE', 'Absensi Kehadiran');
 include '../includes/header.php';
 ?>
