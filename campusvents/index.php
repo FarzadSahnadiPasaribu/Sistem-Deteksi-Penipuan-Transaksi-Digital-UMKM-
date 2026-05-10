@@ -42,7 +42,7 @@ include __DIR__ . '/includes/header.php';
 <nav class="public-nav" id="main-nav">
   <div class="container">
     <div class="nav-inner">
-      <a href="/campusvents/index.php" class="nav-logo">
+      <a href="<?= BASE_URL ?>/index.php" class="nav-logo">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Campus<span class="accent">Vents</span>
       </a>
@@ -50,17 +50,17 @@ include __DIR__ . '/includes/header.php';
         <a href="#events" class="nav-link">Event</a>
         <a href="#cara-kerja" class="nav-link">Cara Kerja</a>
         <?php if (isLoggedIn()): ?>
-        <a href="/campusvents/<?= $_SESSION['user_role'] ?>/dashboard.php" class="nav-link">Dashboard</a>
+        <a href="<?= BASE_URL ?>/<?= $_SESSION['user_role'] ?>/dashboard.php" class="nav-link">Dashboard</a>
         <?php endif; ?>
       </div>
       <div class="nav-actions">
         <?php if (isLoggedIn()): ?>
-        <a href="/campusvents/<?= $_SESSION['user_role'] ?>/dashboard.php" class="btn btn-primary btn-sm">
+        <a href="<?= BASE_URL ?>/<?= $_SESSION['user_role'] ?>/dashboard.php" class="btn btn-primary btn-sm">
           Ke Dashboard
         </a>
         <?php else: ?>
-        <a href="/campusvents/login.php" class="btn btn-ghost btn-sm" style="color:rgba(255,255,255,0.8)">Masuk</a>
-        <a href="/campusvents/register.php" class="btn btn-accent btn-sm">Daftar Gratis</a>
+        <a href="<?= BASE_URL ?>/login.php" class="btn btn-ghost btn-sm" style="color:rgba(255,255,255,0.8)">Masuk</a>
+        <a href="<?= BASE_URL ?>/register.php" class="btn btn-accent btn-sm">Daftar Gratis</a>
         <?php endif; ?>
       </div>
     </div>
@@ -85,7 +85,7 @@ include __DIR__ . '/includes/header.php';
           Temukan ratusan event kampus yang sesuai dengan minat dan passionmu. Daftar, hadir, dan jadilah bagian dari komunitas mahasiswa aktif.
         </p>
         <div class="hero-cta">
-          <a href="/campusvents/register.php" class="btn btn-accent btn-lg">
+          <a href="<?= BASE_URL ?>/register.php" class="btn btn-accent btn-lg">
             Mulai Sekarang — Gratis
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
           </a>
@@ -183,7 +183,7 @@ include __DIR__ . '/includes/header.php';
       <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <h3>Belum ada event tersedia</h3>
       <p>Event terbaru akan muncul di sini. Cek kembali nanti atau daftar untuk mendapat notifikasi.</p>
-      <a href="/campusvents/register.php" class="btn btn-primary">Daftar Sekarang</a>
+      <a href="<?= BASE_URL ?>/register.php" class="btn btn-primary">Daftar Sekarang</a>
     </div>
     <?php else: ?>
     <div class="cards-grid">
@@ -193,7 +193,7 @@ include __DIR__ . '/includes/header.php';
       ?>
       <div class="card event-card">
         <?php if ($ev['poster']): ?>
-        <img src="/campusvents/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>"
+        <img src="<?= BASE_URL ?>/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>"
              alt="<?= htmlspecialchars($ev['title']) ?>" class="card-img">
         <?php else: ?>
         <div class="card-img-placeholder">
@@ -234,11 +234,11 @@ include __DIR__ . '/includes/header.php';
 
         <div class="card-footer">
           <?php if (isLoggedIn()): ?>
-          <a href="/campusvents/mahasiswa/detail_event.php?id=<?= $ev['id'] ?>" class="btn btn-primary btn-sm btn-block">
+          <a href="<?= BASE_URL ?>/mahasiswa/detail_event.php?id=<?= $ev['id'] ?>" class="btn btn-primary btn-sm btn-block">
             Lihat Detail
           </a>
           <?php else: ?>
-          <a href="/campusvents/login.php" class="btn btn-outline btn-sm btn-block">
+          <a href="<?= BASE_URL ?>/login.php" class="btn btn-outline btn-sm btn-block">
             Login untuk Daftar
           </a>
           <?php endif; ?>
@@ -249,7 +249,7 @@ include __DIR__ . '/includes/header.php';
 
     <?php if (isLoggedIn()): ?>
     <div style="text-align:center;margin-top:var(--space-10)">
-      <a href="/campusvents/mahasiswa/katalog.php" class="btn btn-outline btn-lg">
+      <a href="<?= BASE_URL ?>/mahasiswa/katalog.php" class="btn btn-outline btn-lg">
         Lihat Semua Event
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
       </a>
@@ -358,12 +358,12 @@ include __DIR__ . '/includes/header.php';
       Bergabung dengan ribuan mahasiswa yang sudah menggunakan CampusVents untuk menemukan event terbaik.
     </p>
     <?php if (!isLoggedIn()): ?>
-    <a href="/campusvents/register.php" class="btn btn-primary btn-lg">
+    <a href="<?= BASE_URL ?>/register.php" class="btn btn-primary btn-lg">
       Daftar Sekarang — Gratis
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </a>
     <?php else: ?>
-    <a href="/campusvents/mahasiswa/katalog.php" class="btn btn-primary btn-lg">
+    <a href="<?= BASE_URL ?>/mahasiswa/katalog.php" class="btn btn-primary btn-lg">
       Jelajahi Event
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </a>
@@ -385,9 +385,9 @@ include __DIR__ . '/includes/header.php';
       <div>
         <div class="footer-col-title">Navigasi</div>
         <div class="footer-links">
-          <a href="/campusvents/index.php" class="footer-link">Beranda</a>
-          <a href="/campusvents/register.php" class="footer-link">Daftar</a>
-          <a href="/campusvents/login.php" class="footer-link">Masuk</a>
+          <a href="<?= BASE_URL ?>/index.php" class="footer-link">Beranda</a>
+          <a href="<?= BASE_URL ?>/register.php" class="footer-link">Daftar</a>
+          <a href="<?= BASE_URL ?>/login.php" class="footer-link">Masuk</a>
         </div>
       </div>
       <div>

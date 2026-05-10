@@ -76,7 +76,7 @@ include '../includes/header.php';
     </div>
 
     <!-- Filter Bar -->
-    <form method="GET" action="/campusvents/mahasiswa/katalog.php">
+    <form method="GET" action="<?= BASE_URL ?>/mahasiswa/katalog.php">
       <div class="filter-bar">
         <div class="input-group filter-search">
           <span class="input-icon">
@@ -104,7 +104,7 @@ include '../includes/header.php';
         <button type="submit" class="btn btn-primary">Cari</button>
 
         <?php if ($hasFilter): ?>
-        <a href="/campusvents/mahasiswa/katalog.php" class="btn btn-ghost">Reset</a>
+        <a href="<?= BASE_URL ?>/mahasiswa/katalog.php" class="btn btn-ghost">Reset</a>
         <?php endif; ?>
       </div>
     </form>
@@ -126,7 +126,7 @@ include '../includes/header.php';
       </svg>
       <h3>Tidak ada event ditemukan</h3>
       <p>Coba ubah kata kunci pencarian atau reset filter untuk melihat semua event.</p>
-      <a href="/campusvents/mahasiswa/katalog.php" class="btn btn-primary">Reset Filter</a>
+      <a href="<?= BASE_URL ?>/mahasiswa/katalog.php" class="btn btn-primary">Reset Filter</a>
     </div>
     <?php else: ?>
     <div class="cards-grid">
@@ -138,7 +138,7 @@ include '../includes/header.php';
       ?>
       <div class="card event-card">
         <?php if ($ev['poster']): ?>
-        <img src="/campusvents/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>" class="card-img" alt="">
+        <img src="<?= BASE_URL ?>/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>" class="card-img" alt="">
         <?php else: ?>
         <div class="card-img-placeholder"><?= htmlspecialchars($ev['category_icon']) ?></div>
         <?php endif; ?>
@@ -176,7 +176,7 @@ include '../includes/header.php';
             <?= $quota['status'] === 'full' ? 'Kuota Penuh' : 'Pendaftaran Ditutup' ?>
           </span>
           <?php else: ?>
-          <a href="/campusvents/mahasiswa/detail_event.php?id=<?= $ev['id'] ?>" class="btn btn-primary btn-sm btn-block">Daftar Sekarang</a>
+          <a href="<?= BASE_URL ?>/mahasiswa/detail_event.php?id=<?= $ev['id'] ?>" class="btn btn-primary btn-sm btn-block">Daftar Sekarang</a>
           <?php endif; ?>
         </div>
       </div>

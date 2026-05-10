@@ -337,9 +337,9 @@ a.btn.outline:hover{background:#1A1A2E;color:#F5F4F0}
   </div>
 
   <div class="links">
-    <a href="/campusvents/index.php" class="btn">Buka CampusVents</a>
-    <a href="/campusvents/login.php" class="btn outline">Halaman Login</a>
-    <a href="/campusvents/campusvents.sql" class="btn outline" download>
+    <a href="<?= BASE_URL ?>/index.php" class="btn">Buka CampusVents</a>
+    <a href="<?= BASE_URL ?>/login.php" class="btn outline">Halaman Login</a>
+    <a href="<?= BASE_URL ?>/campusvents.sql" class="btn outline" download>
       ↓ Download SQL
     </a>
   </div>

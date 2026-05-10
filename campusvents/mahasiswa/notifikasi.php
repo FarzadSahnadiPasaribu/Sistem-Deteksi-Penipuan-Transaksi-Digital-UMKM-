@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     if (verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         $db->prepare("UPDATE notifications SET is_read=1 WHERE user_id=?")->execute([$user['id']]);
         setFlash('Semua notifikasi ditandai sudah dibaca.', 'success');
-        header('Location: /campusvents/mahasiswa/notifikasi.php');
+        header('Location: ' . BASE_URL . '/mahasiswa/notifikasi.php');
         exit;
     }
 }
@@ -101,7 +101,7 @@ include '../includes/header.php';
               <?= htmlspecialchars($n['message']) ?>
             </p>
             <?php if ($n['event_id'] && $n['event_title']): ?>
-            <a href="/campusvents/mahasiswa/detail_event.php?id=<?= $n['event_id'] ?>&read=<?= $n['id'] ?>"
+            <a href="<?= BASE_URL ?>/mahasiswa/detail_event.php?id=<?= $n['event_id'] ?>&read=<?= $n['id'] ?>"
                class="btn btn-ghost btn-sm" style="margin-top:var(--space-2);padding-left:0">
               Lihat Event: <?= htmlspecialchars(truncate($n['event_title'], 40)) ?>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>

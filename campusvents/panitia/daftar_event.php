@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             setFlash('Hanya event berstatus draft yang bisa dihapus.', 'error');
         }
     }
-    header('Location: /campusvents/panitia/daftar_event.php');
+    header('Location: ' . BASE_URL . '/panitia/daftar_event.php');
     exit;
 }
 
@@ -64,7 +64,7 @@ include '../includes/header.php';
         <h1 class="page-title">Event Saya</h1>
         <p class="page-subtitle">Kelola semua event yang kamu buat</p>
       </div>
-      <a href="/campusvents/panitia/buat_event.php" class="btn btn-primary">
+      <a href="<?= BASE_URL ?>/panitia/buat_event.php" class="btn btn-primary">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Buat Event Baru
       </a>
@@ -85,7 +85,7 @@ include '../includes/header.php';
       <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <h3>Tidak ada event</h3>
       <p>Belum ada event dengan status ini.</p>
-      <a href="/campusvents/panitia/buat_event.php" class="btn btn-primary">Buat Event</a>
+      <a href="<?= BASE_URL ?>/panitia/buat_event.php" class="btn btn-primary">Buat Event</a>
     </div>
     <?php else: ?>
     <div class="table-wrapper">
@@ -124,8 +124,8 @@ include '../includes/header.php';
             <td><span class="status-badge status-<?= htmlspecialchars($ev['status']) ?>"><?= ucfirst($ev['status']) ?></span></td>
             <td style="font-size:.8125rem;color:var(--clr-text-muted)"><?= timeAgo($ev['created_at']) ?></td>
             <td style="white-space:nowrap">
-              <a href="/campusvents/panitia/edit_event.php?id=<?= $ev['id'] ?>" class="btn btn-ghost btn-sm">Edit</a>
-              <a href="/campusvents/panitia/peserta.php?event_id=<?= $ev['id'] ?>" class="btn btn-outline btn-sm">Peserta</a>
+              <a href="<?= BASE_URL ?>/panitia/edit_event.php?id=<?= $ev['id'] ?>" class="btn btn-ghost btn-sm">Edit</a>
+              <a href="<?= BASE_URL ?>/panitia/peserta.php?event_id=<?= $ev['id'] ?>" class="btn btn-outline btn-sm">Peserta</a>
               <?php if ($ev['status'] === 'draft'): ?>
               <form method="POST" style="display:inline">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">

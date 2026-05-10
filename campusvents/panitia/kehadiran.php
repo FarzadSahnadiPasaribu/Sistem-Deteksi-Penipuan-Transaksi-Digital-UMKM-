@@ -82,7 +82,7 @@ include '../includes/header.php';
 
     <!-- Event Selector -->
     <div class="filter-bar" style="margin-bottom:var(--space-6)">
-      <select class="form-control form-select" onchange="window.location.href='/campusvents/panitia/kehadiran.php?event_id='+this.value" style="max-width:400px">
+      <select class="form-control form-select" onchange="window.location.href='<?= BASE_URL ?>/panitia/kehadiran.php?event_id='+this.value" style="max-width:400px">
         <option value="">-- Pilih Event --</option>
         <?php foreach ($myEvents as $ev): ?>
         <option value="<?= $ev['id'] ?>" <?= $eventId == $ev['id'] ? 'selected' : '' ?>>

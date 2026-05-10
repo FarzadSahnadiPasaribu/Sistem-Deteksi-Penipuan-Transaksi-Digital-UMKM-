@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setFlash('Status akun berhasil diubah.', 'success');
         }
     }
-    header('Location: /campusvents/admin/kelola_pengguna.php?' . http_build_query(['q' => $search, 'role' => $role, 'page' => $page]));
+    header('Location: ' . BASE_URL . '/admin/kelola_pengguna.php?' . http_build_query(['q' => $search, 'role' => $role, 'page' => $page]));
     exit;
 }
 
@@ -92,7 +92,7 @@ include '../includes/header.php';
         </select>
         <button type="submit" class="btn btn-primary">Cari</button>
         <?php if ($search || $role !== 'all'): ?>
-        <a href="/campusvents/admin/kelola_pengguna.php" class="btn btn-ghost">Reset</a>
+        <a href="<?= BASE_URL ?>/admin/kelola_pengguna.php" class="btn btn-ghost">Reset</a>
         <?php endif; ?>
       </div>
     </form>

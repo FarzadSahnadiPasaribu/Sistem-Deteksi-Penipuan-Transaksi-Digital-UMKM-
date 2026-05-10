@@ -13,7 +13,7 @@ $csrf = generateCsrfToken();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         setFlash('Token tidak valid.', 'error');
-        header('Location: /campusvents/admin/validasi_event.php');
+        header('Location: ' . BASE_URL . '/admin/validasi_event.php');
         exit;
     }
 
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$ev || $ev['status'] !== 'pending') {
         setFlash('Event tidak valid atau sudah divalidasi.', 'error');
-        header('Location: /campusvents/admin/validasi_event.php');
+        header('Location: ' . BASE_URL . '/admin/validasi_event.php');
         exit;
     }
 
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $reason = trim($_POST['rejection_reason'] ?? '');
         if (empty($reason)) {
             setFlash('Masukkan alasan penolakan.', 'error');
-            header('Location: /campusvents/admin/validasi_event.php');
+            header('Location: ' . BASE_URL . '/admin/validasi_event.php');
             exit;
         }
         $db->prepare("UPDATE events SET status='rejected', rejection_reason=?, updated_at=NOW() WHERE id=?")
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash("Event \"{$ev['title']}\" ditolak.", 'info');
     }
 
-    header('Location: /campusvents/admin/validasi_event.php');
+    header('Location: ' . BASE_URL . '/admin/validasi_event.php');
     exit;
 }
 
@@ -105,7 +105,7 @@ include '../includes/header.php';
           <!-- Poster thumb -->
           <div style="width:120px;flex-shrink:0">
             <?php if ($ev['poster']): ?>
-            <img src="/campusvents/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>"
+            <img src="<?= BASE_URL ?>/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>"
                  style="width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:var(--radius-md)" alt="">
             <?php else: ?>
             <div style="width:120px;aspect-ratio:16/9;background:linear-gradient(135deg,var(--clr-brand),#2D3561);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:2rem">

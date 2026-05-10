@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $msg = $status === 'pending' ? 'Event berhasil diajukan untuk validasi admin!' : 'Draft event berhasil disimpan.';
             setFlash($msg, 'success');
-            header('Location: /campusvents/panitia/daftar_event.php');
+            header('Location: ' . BASE_URL . '/panitia/daftar_event.php');
             exit;
         }
     }
@@ -74,7 +74,7 @@ include '../includes/header.php';
 
   <main class="dashboard-main">
     <div class="breadcrumb">
-      <a href="/campusvents/panitia/dashboard.php">Dashboard</a>
+      <a href="<?= BASE_URL ?>/panitia/dashboard.php">Dashboard</a>
       <span class="breadcrumb-sep">›</span>
       <span class="breadcrumb-current">Buat Event Baru</span>
     </div>

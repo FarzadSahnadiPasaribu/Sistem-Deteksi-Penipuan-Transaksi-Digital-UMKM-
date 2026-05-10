@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                    ->execute([$name, $nim, $prodi, $bio, $user['id']]);
                 $_SESSION['user_name'] = $name;
                 setFlash('Profil berhasil diperbarui.', 'success');
-                header('Location: /campusvents/mahasiswa/profil.php');
+                header('Location: ' . BASE_URL . '/mahasiswa/profil.php');
                 exit;
             }
         }
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $hash = password_hash($newPw, PASSWORD_BCRYPT);
                 $db->prepare("UPDATE users SET password=?,updated_at=NOW() WHERE id=?")->execute([$hash, $user['id']]);
                 setFlash('Password berhasil diubah.', 'success');
-                header('Location: /campusvents/mahasiswa/profil.php');
+                header('Location: ' . BASE_URL . '/mahasiswa/profil.php');
                 exit;
             }
         }
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             setFlash('Minat berhasil diperbarui.', 'success');
-            header('Location: /campusvents/mahasiswa/profil.php');
+            header('Location: ' . BASE_URL . '/mahasiswa/profil.php');
             exit;
         }
     }

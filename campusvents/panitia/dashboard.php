@@ -42,7 +42,7 @@ include '../includes/header.php';
       <div class="greeting-date">Dashboard Panitia</div>
       <h2 class="greeting-title">Halo, <strong><?= htmlspecialchars(explode(' ', $user['name'])[0]) ?></strong></h2>
       <p class="greeting-sub">Kelola event kampusmu dengan mudah dan efisien.</p>
-      <a href="/campusvents/panitia/buat_event.php" class="btn btn-accent" style="margin-top:var(--space-5);display:inline-flex">
+      <a href="<?= BASE_URL ?>/panitia/buat_event.php" class="btn btn-accent" style="margin-top:var(--space-5);display:inline-flex">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Buat Event Baru
       </a>
@@ -77,7 +77,7 @@ include '../includes/header.php';
 
     <div class="section-header">
       <div><h2 class="section-title">Event Terbaru Saya</h2><div class="section-title-bar"></div></div>
-      <a href="/campusvents/panitia/daftar_event.php" class="btn btn-ghost btn-sm">Lihat Semua</a>
+      <a href="<?= BASE_URL ?>/panitia/daftar_event.php" class="btn btn-ghost btn-sm">Lihat Semua</a>
     </div>
 
     <?php if (empty($recentEvts)): ?>
@@ -85,7 +85,7 @@ include '../includes/header.php';
       <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <h3>Belum ada event</h3>
       <p>Buat event pertamamu sekarang!</p>
-      <a href="/campusvents/panitia/buat_event.php" class="btn btn-primary">Buat Event</a>
+      <a href="<?= BASE_URL ?>/panitia/buat_event.php" class="btn btn-primary">Buat Event</a>
     </div>
     <?php else: ?>
     <div class="table-wrapper">
@@ -119,8 +119,8 @@ include '../includes/header.php';
             </td>
             <td><span class="status-badge status-<?= htmlspecialchars($ev['status']) ?>"><?= ucfirst($ev['status']) ?></span></td>
             <td style="white-space:nowrap">
-              <a href="/campusvents/panitia/edit_event.php?id=<?= $ev['id'] ?>" class="btn btn-ghost btn-sm">Edit</a>
-              <a href="/campusvents/panitia/peserta.php?event_id=<?= $ev['id'] ?>" class="btn btn-outline btn-sm">Peserta</a>
+              <a href="<?= BASE_URL ?>/panitia/edit_event.php?id=<?= $ev['id'] ?>" class="btn btn-ghost btn-sm">Edit</a>
+              <a href="<?= BASE_URL ?>/panitia/peserta.php?event_id=<?= $ev['id'] ?>" class="btn btn-outline btn-sm">Peserta</a>
             </td>
           </tr>
           <?php endforeach; ?>

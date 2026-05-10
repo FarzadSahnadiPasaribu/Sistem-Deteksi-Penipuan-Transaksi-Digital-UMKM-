@@ -16,7 +16,7 @@ function requireRole(string|array $roles, string $redirect = '/campusvents/login
     requireLogin($redirect);
     $allowed = is_array($roles) ? $roles : [$roles];
     if (!in_array($_SESSION['user_role'] ?? '', $allowed, true)) {
-        header("Location: /campusvents/login.php");
+        header("Location: " . BASE_URL . "/login.php");
         exit;
     }
 }

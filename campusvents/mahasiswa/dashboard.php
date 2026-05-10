@@ -117,7 +117,7 @@ include '../includes/header.php';
         <h2 class="section-title">Rekomendasi Untukmu</h2>
         <div class="section-title-bar"></div>
       </div>
-      <a href="/campusvents/mahasiswa/katalog.php" class="btn btn-ghost btn-sm">Lihat Semua</a>
+      <a href="<?= BASE_URL ?>/mahasiswa/katalog.php" class="btn btn-ghost btn-sm">Lihat Semua</a>
     </div>
     <div class="cards-grid" style="margin-bottom:var(--space-10)">
       <?php foreach ($recEvents as $ev):
@@ -126,7 +126,7 @@ include '../includes/header.php';
       ?>
       <div class="card event-card">
         <?php if ($ev['poster']): ?>
-        <img src="/campusvents/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>" class="card-img" alt="">
+        <img src="<?= BASE_URL ?>/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>" class="card-img" alt="">
         <?php else: ?>
         <div class="card-img-placeholder"><?= htmlspecialchars($ev['category_icon']) ?></div>
         <?php endif; ?>
@@ -154,7 +154,7 @@ include '../includes/header.php';
           </div>
         </div>
         <div class="card-footer">
-          <a href="/campusvents/mahasiswa/detail_event.php?id=<?= $ev['id'] ?>" class="btn btn-primary btn-sm btn-block">Daftar Sekarang</a>
+          <a href="<?= BASE_URL ?>/mahasiswa/detail_event.php?id=<?= $ev['id'] ?>" class="btn btn-primary btn-sm btn-block">Daftar Sekarang</a>
         </div>
       </div>
       <?php endforeach; ?>
@@ -170,7 +170,7 @@ include '../includes/header.php';
             <h2 class="section-title">Event Terbaru</h2>
             <div class="section-title-bar"></div>
           </div>
-          <a href="/campusvents/mahasiswa/katalog.php" class="btn btn-ghost btn-sm">Semua Event</a>
+          <a href="<?= BASE_URL ?>/mahasiswa/katalog.php" class="btn btn-ghost btn-sm">Semua Event</a>
         </div>
         <?php if (empty($latestEvents)): ?>
         <div class="empty-state" style="padding:var(--space-10)">
@@ -184,7 +184,7 @@ include '../includes/header.php';
           ?>
           <div class="card event-card">
             <?php if ($ev['poster']): ?>
-            <img src="/campusvents/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>" class="card-img" alt="">
+            <img src="<?= BASE_URL ?>/uploads/posters/<?= htmlspecialchars($ev['poster']) ?>" class="card-img" alt="">
             <?php else: ?>
             <div class="card-img-placeholder" style="font-size:.9rem"><?= htmlspecialchars($ev['category_icon']) ?></div>
             <?php endif; ?>
@@ -194,7 +194,7 @@ include '../includes/header.php';
               <div class="meta-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg><?= formatDate($ev['date_start']) ?></div>
             </div>
             <div class="card-footer">
-              <a href="/campusvents/mahasiswa/detail_event.php?id=<?= $ev['id'] ?>" class="btn btn-outline btn-sm btn-block">Lihat Detail</a>
+              <a href="<?= BASE_URL ?>/mahasiswa/detail_event.php?id=<?= $ev['id'] ?>" class="btn btn-outline btn-sm btn-block">Lihat Detail</a>
             </div>
           </div>
           <?php endforeach; ?>
@@ -214,14 +214,14 @@ include '../includes/header.php';
         <div class="card" style="padding:var(--space-6);text-align:center">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--clr-text-muted)" stroke-width="1.5" style="margin:0 auto var(--space-3)"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <p style="font-size:.875rem">Kamu belum terdaftar di event apapun.</p>
-          <a href="/campusvents/mahasiswa/katalog.php" class="btn btn-primary btn-sm" style="margin-top:var(--space-3)">Cari Event</a>
+          <a href="<?= BASE_URL ?>/mahasiswa/katalog.php" class="btn btn-primary btn-sm" style="margin-top:var(--space-3)">Cari Event</a>
         </div>
         <?php else: ?>
         <div class="upcoming-list">
           <?php foreach ($upcoming as $ev):
             $dt = new DateTime($ev['date_start']);
           ?>
-          <a href="/campusvents/mahasiswa/my_events.php" class="upcoming-item">
+          <a href="<?= BASE_URL ?>/mahasiswa/my_events.php" class="upcoming-item">
             <div class="upcoming-date-box">
               <div class="upcoming-date-day"><?= $dt->format('d') ?></div>
               <div class="upcoming-date-mon"><?= ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][$dt->format('n')-1] ?></div>
@@ -234,7 +234,7 @@ include '../includes/header.php';
           </a>
           <?php endforeach; ?>
         </div>
-        <a href="/campusvents/mahasiswa/my_events.php" class="btn btn-ghost btn-sm" style="margin-top:var(--space-4);width:100%">Lihat Semua</a>
+        <a href="<?= BASE_URL ?>/mahasiswa/my_events.php" class="btn btn-ghost btn-sm" style="margin-top:var(--space-4);width:100%">Lihat Semua</a>
         <?php endif; ?>
       </div>
     </div>

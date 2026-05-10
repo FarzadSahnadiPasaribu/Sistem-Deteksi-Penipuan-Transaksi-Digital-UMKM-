@@ -1,4 +1,15 @@
 <?php
+// Auto-detect base URL so the app works from any folder name
+if (!defined('BASE_URL')) {
+    $__app = str_replace('\\', '/', realpath(__DIR__ . '/..'));
+    $__doc = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'] ?? ''));
+    $__rel = ($__doc && str_starts_with($__app, $__doc))
+           ? substr($__app, strlen($__doc))
+           : '/campusvents';
+    define('BASE_URL', rtrim($__rel, '/') ?: '');
+    unset($__app, $__doc, $__rel);
+}
+
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'campusvents_db');
 define('DB_USER', 'root');

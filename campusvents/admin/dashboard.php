@@ -114,7 +114,7 @@ include '../includes/header.php';
         <div class="section-title-bar"></div>
       </div>
       <?php if ($pending > 0): ?>
-      <a href="/campusvents/admin/validasi_event.php" class="btn btn-accent btn-sm">
+      <a href="<?= BASE_URL ?>/admin/validasi_event.php" class="btn btn-accent btn-sm">
         <?= $pending ?> event pending
       </a>
       <?php endif; ?>
@@ -138,7 +138,7 @@ include '../includes/header.php';
             <td><span class="badge <?= getCategoryBadgeClass($ev['category_name']) ?>"><?= htmlspecialchars($ev['category_name']) ?></span></td>
             <td style="font-size:.875rem"><?= htmlspecialchars($ev['organizer_name']) ?></td>
             <td style="font-size:.8125rem;color:var(--clr-text-muted)"><?= timeAgo($ev['created_at']) ?></td>
-            <td><a href="/campusvents/admin/validasi_event.php" class="btn btn-primary btn-sm">Validasi</a></td>
+            <td><a href="<?= BASE_URL ?>/admin/validasi_event.php" class="btn btn-primary btn-sm">Validasi</a></td>
           </tr>
           <?php endforeach; ?>
         </tbody>

@@ -1,6 +1,12 @@
 <?php
 if (!defined('PAGE_TITLE')) define('PAGE_TITLE', 'CampusVents');
-if (!defined('BASE_URL'))   define('BASE_URL', '/campusvents');
+if (!defined('BASE_URL')) {
+    $__app = str_replace('\\', '/', realpath(__DIR__ . '/..'));
+    $__doc = str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'] ?? ''));
+    $__rel = ($__doc && str_starts_with($__app, $__doc)) ? substr($__app, strlen($__doc)) : '/campusvents';
+    define('BASE_URL', rtrim($__rel, '/') ?: '');
+    unset($__app, $__doc, $__rel);
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">

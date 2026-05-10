@@ -14,7 +14,7 @@ $event = $stmt->fetch();
 
 if (!$event) {
     setFlash('Event tidak ditemukan.', 'error');
-    header('Location: /campusvents/panitia/daftar_event.php');
+    header('Location: ' . BASE_URL . '/panitia/daftar_event.php');
     exit;
 }
 
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $msg = $newStatus === 'pending' ? 'Event diajukan ulang untuk validasi.' : 'Event berhasil diperbarui.';
             setFlash($msg, 'success');
-            header('Location: /campusvents/panitia/daftar_event.php');
+            header('Location: ' . BASE_URL . '/panitia/daftar_event.php');
             exit;
         }
     }
@@ -84,9 +84,9 @@ include '../includes/header.php';
 
   <main class="dashboard-main">
     <div class="breadcrumb">
-      <a href="/campusvents/panitia/dashboard.php">Dashboard</a>
+      <a href="<?= BASE_URL ?>/panitia/dashboard.php">Dashboard</a>
       <span class="breadcrumb-sep">›</span>
-      <a href="/campusvents/panitia/daftar_event.php">Daftar Event</a>
+      <a href="<?= BASE_URL ?>/panitia/daftar_event.php">Daftar Event</a>
       <span class="breadcrumb-sep">›</span>
       <span class="breadcrumb-current">Edit Event</span>
     </div>
@@ -180,7 +180,7 @@ include '../includes/header.php';
         <div class="card-body">
           <h4 style="margin-bottom:var(--space-4)">Poster</h4>
           <?php if ($event['poster']): ?>
-          <img src="/campusvents/uploads/posters/<?= htmlspecialchars($event['poster']) ?>"
+          <img src="<?= BASE_URL ?>/uploads/posters/<?= htmlspecialchars($event['poster']) ?>"
                style="max-height:180px;border-radius:var(--radius-md);object-fit:cover;margin-bottom:var(--space-4)">
           <?php endif; ?>
           <img id="poster-preview" src="" alt="" style="display:none;max-height:180px;border-radius:var(--radius-md);margin-bottom:var(--space-4)">
@@ -193,7 +193,7 @@ include '../includes/header.php';
       </div>
 
       <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
-        <a href="/campusvents/panitia/daftar_event.php" class="btn btn-ghost">Batal</a>
+        <a href="<?= BASE_URL ?>/panitia/daftar_event.php" class="btn btn-ghost">Batal</a>
         <button type="submit" class="btn btn-outline" onclick="document.getElementById('submit_type_edit').value='save'">
           Simpan Perubahan
         </button>

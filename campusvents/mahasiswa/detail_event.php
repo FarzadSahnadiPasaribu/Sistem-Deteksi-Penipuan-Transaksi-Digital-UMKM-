@@ -9,7 +9,7 @@ $db      = getDB();
 $eventId = (int)($_GET['id'] ?? 0);
 
 if (!$eventId) {
-    header('Location: /campusvents/mahasiswa/katalog.php');
+    header('Location: ' . BASE_URL . '/mahasiswa/katalog.php');
     exit;
 }
 
@@ -27,7 +27,7 @@ $stmt->execute([$eventId]);
 $event = $stmt->fetch();
 
 if (!$event) {
-    header('Location: /campusvents/mahasiswa/katalog.php');
+    header('Location: ' . BASE_URL . '/mahasiswa/katalog.php');
     exit;
 }
 
@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             "Kamu berhasil mendaftar ke \"{$event['title']}\". Kode: $code", 'pendaftaran', $eventId);
 
         setFlash("Berhasil mendaftar! Kode pendaftaran kamu: $code", 'success');
-        header("Location: /campusvents/mahasiswa/detail_event.php?id=$eventId");
+        header("Location: " . BASE_URL . "/mahasiswa/detail_event.php?id=$eventId");
         exit;
     }
 }
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     } elseif ($isReg) {
         $db->prepare("UPDATE registrations SET status='cancelled' WHERE user_id=? AND event_id=?")->execute([$user['id'], $eventId]);
         setFlash('Pendaftaran berhasil dibatalkan.', 'info');
-        header("Location: /campusvents/mahasiswa/detail_event.php?id=$eventId");
+        header("Location: " . BASE_URL . "/mahasiswa/detail_event.php?id=$eventId");
         exit;
     }
 }
@@ -97,9 +97,9 @@ include '../includes/header.php';
   <main class="dashboard-main">
     <!-- Breadcrumb -->
     <div class="breadcrumb">
-      <a href="/campusvents/mahasiswa/dashboard.php">Dashboard</a>
+      <a href="<?= BASE_URL ?>/mahasiswa/dashboard.php">Dashboard</a>
       <span class="breadcrumb-sep">›</span>
-      <a href="/campusvents/mahasiswa/katalog.php">Katalog Event</a>
+      <a href="<?= BASE_URL ?>/mahasiswa/katalog.php">Katalog Event</a>
       <span class="breadcrumb-sep">›</span>
       <span class="breadcrumb-current"><?= htmlspecialchars(truncate($event['title'], 40)) ?></span>
     </div>
@@ -116,7 +116,7 @@ include '../includes/header.php';
       <div>
         <!-- Poster -->
         <?php if ($event['poster']): ?>
-        <img src="/campusvents/uploads/posters/<?= htmlspecialchars($event['poster']) ?>"
+        <img src="<?= BASE_URL ?>/uploads/posters/<?= htmlspecialchars($event['poster']) ?>"
              alt="Poster <?= htmlspecialchars($event['title']) ?>"
              style="width:100%;border-radius:var(--radius-lg);aspect-ratio:16/7;object-fit:cover;margin-bottom:var(--space-6)">
         <?php else: ?>

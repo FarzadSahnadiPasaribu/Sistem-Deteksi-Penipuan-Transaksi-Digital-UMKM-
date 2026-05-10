@@ -4,7 +4,7 @@ require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/includes/functions.php';
 
 if (isLoggedIn()) {
-    header('Location: /campusvents/mahasiswa/dashboard.php');
+    header('Location: ' . BASE_URL . '/mahasiswa/dashboard.php');
     exit;
 }
 
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_email'] = $email;
 
                 setFlash('Akun berhasil dibuat! Selamat datang di CampusVents.', 'success');
-                header('Location: /campusvents/mahasiswa/dashboard.php');
+                header('Location: ' . BASE_URL . '/mahasiswa/dashboard.php');
                 exit;
             }
         }
@@ -92,7 +92,7 @@ include __DIR__ . '/includes/header.php';
 <div class="auth-layout">
   <!-- Brand Side -->
   <div class="auth-brand">
-    <a href="/campusvents/index.php" class="auth-brand-logo">
+    <a href="<?= BASE_URL ?>/index.php" class="auth-brand-logo">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       Campus<span class="accent">Vents</span>
     </a>
@@ -124,7 +124,7 @@ include __DIR__ . '/includes/header.php';
       <h1 class="auth-form-title">Buat Akun Baru</h1>
       <p class="auth-form-sub">
         Sudah punya akun?
-        <a href="/campusvents/login.php">Masuk di sini</a>
+        <a href="<?= BASE_URL ?>/login.php">Masuk di sini</a>
       </p>
 
       <!-- Step Indicators -->
@@ -147,7 +147,7 @@ include __DIR__ . '/includes/header.php';
       </div>
       <?php endif; ?>
 
-      <form action="/campusvents/register.php" method="POST" id="register-form" data-multistep="2" data-validate novalidate>
+      <form action="<?= BASE_URL ?>/register.php" method="POST" id="register-form" data-multistep="2" data-validate novalidate>
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>">
 
         <!-- STEP 1: Data Diri -->

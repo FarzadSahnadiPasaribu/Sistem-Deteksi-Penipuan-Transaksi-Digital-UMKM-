@@ -11,7 +11,7 @@ $csrf = generateCsrfToken();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         setFlash('Token tidak valid.', 'error');
-        header('Location: /campusvents/admin/kelola_kategori.php');
+        header('Location: ' . BASE_URL . '/admin/kelola_kategori.php');
         exit;
     }
 
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    header('Location: /campusvents/admin/kelola_kategori.php');
+    header('Location: ' . BASE_URL . '/admin/kelola_kategori.php');
     exit;
 }
 

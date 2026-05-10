@@ -62,7 +62,7 @@ include '../includes/header.php';
       </svg>
       <h3>Belum ada event</h3>
       <p>Kamu belum mendaftarkan diri ke event apapun<?= $filter !== 'all' ? ' dengan status ini' : '' ?>.</p>
-      <a href="/campusvents/mahasiswa/katalog.php" class="btn btn-primary">Jelajahi Event</a>
+      <a href="<?= BASE_URL ?>/mahasiswa/katalog.php" class="btn btn-primary">Jelajahi Event</a>
     </div>
     <?php else: ?>
     <div class="table-wrapper">
@@ -102,7 +102,7 @@ include '../includes/header.php';
             <td><span class="reg-code"><?= htmlspecialchars($reg['registration_code']) ?></span></td>
             <td><span class="status-badge status-<?= htmlspecialchars($reg['status']) ?>"><?= ucfirst($reg['status']) ?></span></td>
             <td>
-              <a href="/campusvents/mahasiswa/detail_event.php?id=<?= $reg['event_id'] ?>" class="btn btn-ghost btn-sm">
+              <a href="<?= BASE_URL ?>/mahasiswa/detail_event.php?id=<?= $reg['event_id'] ?>" class="btn btn-ghost btn-sm">
                 Detail
               </a>
             </td>
