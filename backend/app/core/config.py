@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     FRAUD_SCORE_ALERT: float = 0.5
     FRAUD_SCORE_CRITICAL: float = 0.75
 
+    # Claude AI (optional)
+    ANTHROPIC_API_KEY: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = True

@@ -9,6 +9,8 @@ import uuid
 
 from ..models import get_db, Transaction
 from ..services.fraud_service import analyze_receipt
+from ..services.ai_service import get_ai_explanation
+from ..core.config import get_settings
 
 router = APIRouter(prefix="/transactions", tags=["Transaksi"])
 
@@ -187,6 +189,43 @@ def get_transaction(transaction_id: str, db: Session = Depends(get_db)):
         "explanation": explanation,
         "status": trx.status,
         "created_at": trx.created_at.isoformat() if trx.created_at else None,
+    }
+
+
+@router.get("/{transaction_id}/ai-explain", summary="Penjelasan AI")
+def ai_explain_transaction(transaction_id: str, db: Session = Depends(get_db)):
+    """Minta Claude AI menjelaskan hasil deteksi penipuan untuk transaksi ini."""
+    trx = db.query(Transaction).filter(Transaction.transaction_id == transaction_id).first()
+    if not trx:
+        raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
+
+    explanation = []
+    if trx.explanation:
+        try:
+            explanation = json.loads(trx.explanation)
+        except Exception:
+            explanation = [trx.explanation]
+
+    fraud_result = {
+        "is_fraud": trx.is_fraud,
+        "fraud_score": trx.fraud_score,
+        "risk_level": trx.risk_level,
+        "explanation": explanation,
+    }
+
+    settings = get_settings()
+    try:
+        ai_text = get_ai_explanation(fraud_result, api_key=settings.ANTHROPIC_API_KEY or None)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Gagal menghubungi Claude AI: {exc}")
+
+    return {
+        "transaction_id": transaction_id,
+        "ai_explanation": ai_text,
+        "fraud_score": trx.fraud_score,
+        "risk_level": trx.risk_level,
     }
 
 
