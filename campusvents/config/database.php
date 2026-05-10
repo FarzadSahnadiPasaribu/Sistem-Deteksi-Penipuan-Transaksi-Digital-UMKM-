@@ -1,4 +1,9 @@
 <?php
+// Muat env.php jika ada (untuk konfigurasi hosting seperti InfinityFree)
+$__envFile = __DIR__ . '/env.php';
+if (file_exists($__envFile)) require_once $__envFile;
+unset($__envFile);
+
 // Auto-detect base URL so the app works from any folder name
 if (!defined('BASE_URL')) {
     $__app = str_replace('\\', '/', realpath(__DIR__ . '/..'));
@@ -10,10 +15,13 @@ if (!defined('BASE_URL')) {
     unset($__app, $__doc, $__rel);
 }
 
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'campusvents_db');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+// ── Konfigurasi Database ────────────────────────────────────
+// Lokal: ganti ke nilai default di bawah
+// InfinityFree: ganti dengan nilai dari control panel hosting
+define('DB_HOST',    getenv('DB_HOST')    ?: 'localhost');
+define('DB_NAME',    getenv('DB_NAME')    ?: 'campusvents_db');
+define('DB_USER',    getenv('DB_USER')    ?: 'root');
+define('DB_PASS',    getenv('DB_PASS')    ?: '');
 define('DB_CHARSET', 'utf8mb4');
 
 function getDB(): PDO {
