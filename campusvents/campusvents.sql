@@ -18,11 +18,9 @@ SET time_zone = '+00:00';
 SET NAMES utf8mb4;
 
 -- ── DATABASE ────────────────────────────────────────────────
-CREATE DATABASE IF NOT EXISTS `campusvents_db`
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE `campusvents_db`;
+-- Catatan: di shared hosting (InfinityFree dll), buat database
+-- manual via control panel, lalu import file ini dari phpMyAdmin.
+-- Baris CREATE DATABASE dan USE sengaja dihapus agar kompatibel.
 
 -- ── DROP EXISTING TABLES (urutan aman) ─────────────────────
 DROP TABLE IF EXISTS `notifications`;
