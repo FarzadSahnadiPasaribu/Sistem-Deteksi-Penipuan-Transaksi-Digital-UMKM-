@@ -1,5 +1,5 @@
 <?php
-// Muat env.php jika ada (untuk konfigurasi hosting seperti InfinityFree)
+// Muat env.php jika ada (kredensial hosting)
 $__envFile = __DIR__ . '/env.php';
 if (file_exists($__envFile)) require_once $__envFile;
 unset($__envFile);
@@ -15,14 +15,12 @@ if (!defined('BASE_URL')) {
     unset($__app, $__doc, $__rel);
 }
 
-// ── Konfigurasi Database ────────────────────────────────────
-// Lokal: ganti ke nilai default di bawah
-// InfinityFree: ganti dengan nilai dari control panel hosting
-define('DB_HOST',    getenv('DB_HOST')    ?: 'localhost');
-define('DB_NAME',    getenv('DB_NAME')    ?: 'campusvents_db');
-define('DB_USER',    getenv('DB_USER')    ?: 'root');
-define('DB_PASS',    getenv('DB_PASS')    ?: '');
-define('DB_CHARSET', 'utf8mb4');
+// Nilai default untuk lokal (di-override oleh env.php jika ada)
+if (!defined('DB_HOST'))    define('DB_HOST',    'localhost');
+if (!defined('DB_NAME'))    define('DB_NAME',    'campusvents_db');
+if (!defined('DB_USER'))    define('DB_USER',    'root');
+if (!defined('DB_PASS'))    define('DB_PASS',    '');
+if (!defined('DB_CHARSET')) define('DB_CHARSET', 'utf8mb4');
 
 function getDB(): PDO {
     static $pdo = null;
