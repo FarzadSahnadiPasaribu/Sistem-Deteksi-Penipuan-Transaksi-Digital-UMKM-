@@ -14,7 +14,7 @@ $page     = max(1, (int)($_GET['page'] ?? 1));
 $perPage  = 9;
 $offset   = ($page - 1) * $perPage;
 
-$where  = ["e.status = 'published'", "e.registration_deadline > NOW()"];
+$where  = ["e.status = 'published'", "e.date_end > NOW()"];
 $params = [];
 
 if ($search) {

@@ -38,8 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Semua field wajib diisi.';
         } elseif (strtotime($dateE) < strtotime($dateS)) {
             $error = 'Tanggal selesai harus setelah tanggal mulai.';
-        } elseif (strtotime($deadline) > strtotime($dateS)) {
-            $error = 'Deadline pendaftaran harus sebelum tanggal mulai event.';
+        } elseif (strtotime($deadline) >= strtotime($dateE)) {
+            $error = 'Deadline pendaftaran harus sebelum tanggal selesai event.';
         } else {
             $newStatus = $event['status'];
             if ($submit === 'resubmit' && in_array($event['status'], ['draft','rejected'])) {
